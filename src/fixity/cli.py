@@ -9,6 +9,7 @@ import subprocess
 import sys
 from importlib import resources
 from pathlib import Path
+from typing import Dict, List, Optional
 
 DEFAULT_DATA_PATH = "/persistent"
 DEFAULT_INSTALL_PATH = "/usr/local/fixity"
@@ -120,7 +121,7 @@ def parse_args_simulator() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _run(command: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
+def _run(command: List[str], check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(command, text=True, check=check)
 
 
@@ -134,7 +135,7 @@ def _select_engine(engine: str) -> str:
     raise RuntimeError("Neither podman nor docker is installed.")
 
 
-def _select_compose_command(engine: str) -> list[str]:
+def _select_compose_command(engine: str) -> List[str]:
     if engine == "podman":
         if shutil.which("podman-compose"):
             return ["podman-compose"]
@@ -162,7 +163,7 @@ def _config_file() -> Path:
     return _config_dir() / DEFAULT_CONFIG_FILE
 
 
-def _load_config() -> dict[str, str]:
+def _load_config() -> Dict[str, str]:
     path = _config_file()
     if not path.exists():
         return {}
@@ -176,7 +177,7 @@ def _load_config() -> dict[str, str]:
     return {k: str(v) for k, v in payload.items()}
 
 
-def _save_config(config: dict[str, str]) -> None:
+def _save_config(config: Dict[str, str]) -> None:
     cfg_dir = _config_dir()
     cfg_dir.mkdir(parents=True, exist_ok=True)
     with _config_file().open("w", encoding="utf-8") as fp:
@@ -184,7 +185,7 @@ def _save_config(config: dict[str, str]) -> None:
         fp.write("\n")
 
 
-def _resolve_install_path(cli_value: str | None) -> Path:
+def _resolve_install_path(cli_value: Optional[str]) -> Path:
     if cli_value:
         return Path(cli_value).expanduser().resolve()
     cfg = _load_config()
@@ -201,7 +202,7 @@ def _persist_install_path(path: Path) -> None:
 
 
 def _ensure_directory(
-    path: Path, owner: str | None = None, mode: str | None = None
+    path: Path, owner: Optional[str] = None, mode: Optional[str] = None
 ) -> None:
     if path.exists():
         return
@@ -231,9 +232,9 @@ def _run_installed_compose(
     engine: str,
     install_path: Path,
     compose_name: str,
-    env_name: str | None,
+    env_name: Optional[str],
     project_name: str,
-    extra: list[str],
+    extra: List[str],
 ) -> None:
     compose_file = install_path / compose_name
     if not compose_file.exists():
