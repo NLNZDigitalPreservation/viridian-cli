@@ -1,8 +1,6 @@
 # fixity-cli
 
 `fixity-cli` is the Python command-line package for Viridian local operations.
-It wraps the shell workflows currently represented by `cli_dev` and `cli_fixity`
-and bundles the compose files and database scripts required for those workflows.
 It supports Python 3.9 and newer.
 
 ## What the CLI provides
