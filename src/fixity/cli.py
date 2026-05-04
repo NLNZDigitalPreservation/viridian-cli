@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
-from importlib import resources
+from importlib import metadata, resources
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -27,6 +27,12 @@ MASTER_ENV = ".env"
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="fixity", description="Viridian fixity master helper"
+    )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="version",
+        version=f"%(prog)s {metadata.version('fixity-cli')}",
     )
     parser.add_argument(
         "--container-engine",
@@ -90,6 +96,12 @@ def parse_args() -> argparse.Namespace:
 def parse_args_simulator() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="simulator", description="Viridian simulator helper"
+    )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="version",
+        version=f"%(prog)s {metadata.version('fixity-cli')}",
     )
     parser.add_argument(
         "--container-engine",

@@ -43,6 +43,13 @@ fixity --help
 simulator --help
 ```
 
+Print the installed package version:
+
+```bash
+fixity --version
+simulator --version
+```
+
 ## Setup
 
 Install the fixity master stack to the installation directory (default
