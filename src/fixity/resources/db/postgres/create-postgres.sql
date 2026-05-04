@@ -1,0 +1,10 @@
+CREATE DATABASE fixity WITH ENCODING = 'UTF8';
+
+\c fixity
+
+
+CREATE ROLE fixity LOGIN PASSWORD 'fixity'
+NOINHERIT
+VALID UNTIL 'infinity';
+
+GRANT USAGE ON SCHEMA public TO fixity;

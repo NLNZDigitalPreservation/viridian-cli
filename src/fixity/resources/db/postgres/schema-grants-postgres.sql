@@ -1,0 +1,37 @@
+-- grant select, insert, update, delete on id_generator to fixity;
+grant select, insert, update, delete, truncate on global_settings to fixity;
+grant select, insert, update, delete, truncate on white_list to fixity;
+grant select, insert, update, delete, truncate on fixity_task to fixity;
+grant select, insert, update, delete, truncate on fixity_report to fixity;
+grant select, insert, update, delete, truncate on blob_event_queue to fixity;
+grant select, insert, update, delete, truncate on blob_event_results to fixity;
+grant select, insert, update, delete, truncate on permanent_index to fixity;
+grant select, insert, update, delete, truncate on permanent_index_bau to fixity;
+grant select, insert, update, delete, truncate on storage_parameter to fixity;
+grant select, insert, update, delete, truncate on durable_transaction to fixity;
+
+grant select, update, usage on global_settings_id_seq to fixity;
+grant select, update, usage on white_list_id_seq to fixity;
+grant select, update, usage on fixity_task_id_seq to fixity;
+grant select, update, usage on fixity_report_id_seq to fixity;
+grant select, update, usage on blob_event_queue_id_seq to fixity;
+-- grant select, update, usage on permanent_index_bau_id_seq to fixity;
+grant select, update, usage on durable_transaction_id_seq to fixity;
+
+alter table global_settings owner to fixity;
+alter sequence global_settings_id_seq owner to fixity;
+alter table white_list owner to fixity;
+alter sequence white_list_id_seq owner to fixity;
+alter table fixity_task owner to fixity;
+alter sequence fixity_task_id_seq owner to fixity;
+alter table fixity_report owner to fixity;
+alter sequence fixity_report_id_seq owner to fixity;
+alter table blob_event_queue owner to fixity;
+alter sequence blob_event_queue_id_seq owner to fixity;
+alter table blob_event_results owner to fixity;
+alter table permanent_index owner to fixity;
+alter table permanent_index_bau owner to fixity;
+-- alter sequence permanent_index_bau_id_seq owner to fixity;
+alter table storage_parameter owner to fixity;
+alter table durable_transaction owner to fixity;
+alter sequence durable_transaction_id_seq owner to fixity;

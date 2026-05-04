@@ -1,0 +1,35 @@
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    command: "node /usr/local/bin/azurite -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --skipApiVersionCheck"
+    container_name: "azurite"
+    hostname: azurite
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "127.0.0.1:10000:10000"
+      - "127.0.0.1:10001:10001"
+      - "127.0.0.1:10002:10002"
+    volumes:
+      - /persistent/azurite:/data:Z
+  oracle:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: "oracle"
+    restart: always
+    ports:
+      - "127.0.0.1:1521:1521"
+      - "127.0.0.1:5500:5500"
+    environment:
+      - ORACLE_PWD=Pass123Word
+      - ORACLE_EDITION=FREE
+    volumes:
+      - /persistent/oracle:/opt/oracle/oradata:Z
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
