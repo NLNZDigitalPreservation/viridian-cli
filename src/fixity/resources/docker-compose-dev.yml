@@ -5,8 +5,9 @@ services:
     container_name: "azurite"
     hostname: azurite
     restart: always
+    security_opt:
+      - label=disable
     logging:
-      driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
@@ -15,11 +16,17 @@ services:
       - "127.0.0.1:10001:10001"
       - "127.0.0.1:10002:10002"
     volumes:
-      - /persistent/azurite:/data:Z
+      - /persistent/azurite:/data
   oracle:
     image: container-registry.oracle.com/database/free:latest
     container_name: "oracle"
     restart: always
+    security_opt:
+      - label=disable
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "127.0.0.1:1521:1521"
       - "127.0.0.1:5500:5500"
@@ -27,9 +34,4 @@ services:
       - ORACLE_PWD=Pass123Word
       - ORACLE_EDITION=FREE
     volumes:
-      - /persistent/oracle:/opt/oracle/oradata:Z
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - /persistent/oracle:/opt/oracle/oradata
