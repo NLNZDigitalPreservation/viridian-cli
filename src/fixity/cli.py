@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ── master service commands ───────────────────────────────────────────────
-    for name in ("init", "up", "down", "build", "push"):
+    for name in ("up", "down", "build", "push"):
         subparsers.add_parser(name, help=f"{name} fixity master service")
 
     logs_cmd = subparsers.add_parser("logs", help="Follow fixity master logs")
@@ -122,7 +122,7 @@ def parse_args_simulator() -> argparse.Namespace:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for name in ("init", "up", "down"):
+    for name in ("up", "down"):
         subparsers.add_parser(name, help=f"{name} simulator services")
 
     logs_cmd = subparsers.add_parser("logs", help="Follow simulator logs")
@@ -360,6 +360,7 @@ def _install_packaged_assets(install_path: Path) -> None:
 def cmd_install(args: argparse.Namespace) -> None:
     username = getpass.getuser()
     group_name = grp.getgrgid(os.getgid()).gr_name
+    data_path = Path(args.data_path)
 
     # Determine install directory.
     resolved_default = str(_resolve_install_path(args.install_path))
@@ -393,11 +394,29 @@ def cmd_install(args: argparse.Namespace) -> None:
     _persist_install_path(install_path)
     print(f"  Saved config: {_config_file()}")
 
+    # Always initialise fixity master persistent storage.
+    print("\nInitialising persistent storage...")
+    _ensure_master_paths(data_path)
+
+    # Optionally initialise simulator storage.
+    if args.yes:
+        enable_simulator = False
+    else:
+        try:
+            answer = input("Enable simulator? [y/N]: ").strip().lower()
+        except EOFError:
+            answer = ""
+        enable_simulator = answer in ("y", "yes")
+
+    if enable_simulator:
+        print("Initialising simulator persistent storage...")
+        _ensure_simulator_paths(data_path)
+
     print(
         f"\nInstallation complete.\n"
         f"Edit {install_path / MASTER_ENV} as needed, then run:\n"
-        f"  simulator up\n"
-        f"  fixity up"
+        + ("  simulator up\n" if enable_simulator else "")
+        + "  fixity up"
     )
 
 
@@ -408,9 +427,6 @@ def cmd_simulators(args: argparse.Namespace, engine: str) -> None:
     data_path = Path(args.data_path)
     install_path = _resolve_install_path(args.install_path)
 
-    if args.command == "init":
-        _ensure_simulator_paths(data_path)
-        return
     if args.command == "up":
         _ensure_simulator_paths(data_path)
         _run_installed_compose(
@@ -455,9 +471,6 @@ def cmd_master(args: argparse.Namespace, engine: str) -> None:
     data_path = Path(args.data_path)
     install_path = _resolve_install_path(args.install_path)
 
-    if args.command == "init":
-        _ensure_master_paths(data_path)
-        return
     if args.command == "build":
         project_root = Path(args.project_root).resolve()
         dockerfile = project_root / "deployment" / "master" / "Dockerfile"

@@ -8,14 +8,12 @@ It supports Python 3.9 and newer.
 Two console entrypoints are installed:
 
 - **`simulator`** — manages the Azurite and Oracle simulator stack:
-  - `init`
   - `up`
   - `down`
   - `logs`
 - **`fixity`** — manages the fixity master node, plus installation:
   - `install`
   - `info`
-  - `init`
   - `up`
   - `down`
   - `logs`
@@ -61,11 +59,21 @@ fixity install
 
 This command:
 
-1. Pulls the `acrdiaanlnznsbx.azurecr.io/fixity-master` Docker image.
-2. Extracts `docker-compose-dev.yml`, `docker-compose-fixity.yml`, and `db/`
-   from the image (sourced from `/opt/fixity/` inside the image).
+1. Prompts for an installation directory (default `/usr/local/fixity`).
+2. Copies `docker-compose-dev.yml`, `docker-compose-fixity.yml`, and `db/`
+   from the bundled package resources.
 3. Creates a `.env` file in the installation directory from the bundled
    template if one does not already exist.
+4. Initialises fixity master persistent storage directories automatically.
+5. Prompts whether to enable the simulator — if yes, initialises simulator
+   persistent storage directories as well.
+
+Use `--yes` / `-y` to accept all defaults and skip prompts (simulator is not
+enabled in non-interactive mode):
+
+```bash
+fixity install --yes
+```
 
 Edit the `.env` file in the installation directory before starting any
 services.
@@ -79,12 +87,6 @@ fixity info
 ## Usage
 
 ### Simulators
-
-Initialise local simulator storage:
-
-```bash
-simulator init
-```
 
 Start Azurite and Oracle:
 
@@ -105,12 +107,6 @@ simulator logs
 ```
 
 ### Fixity master node
-
-Initialise persistent storage used by the master stack:
-
-```bash
-fixity init
-```
 
 Start the master stack:
 
@@ -152,7 +148,8 @@ fixity push
 
 - `simulator` uses the `docker-compose-dev.yml` extracted at install time. No `.env` file is required.
 - `fixity` uses the `docker-compose-fixity.yml` extracted at install time and reads `.env` from the installation directory.
-- `fixity install` requires Docker (or Podman) to pull and extract the image. Re-run it after an image upgrade to refresh the compose files and `db/`.
+- `fixity install` copies compose files and database scripts from the bundled package resources. Re-run it after a package upgrade to refresh the compose files and `db/`.
+- `fixity install` always initialises fixity master persistent storage. It prompts once whether to also initialise simulator storage; use `--yes` to skip all prompts (simulator will not be initialised).
 - `fixity build` requires a Viridian repository checkout. Use `--project-root <path>` if running from outside the repo root (default: `.`).
 - The image version and registry are read from the installed `docker-compose-fixity.yml`; no flags are needed for `build` or `push`.
 
