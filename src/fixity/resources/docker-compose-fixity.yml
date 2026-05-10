@@ -3,6 +3,8 @@ services:
     image: acrdiaanlnznsbx.azurecr.io/fixity-master:latest
     container_name: "fixity_master"
     restart: always
+    depends_on:
+      - postfix
     ports:
       - "8081:3000"
     environment:
@@ -46,8 +48,8 @@ services:
       - LDAP_CONTEXTSOURCE_MANAGER_DN=${LDAP_CONTEXTSOURCE_MANAGER_DN:-}
       - LDAP_CONTEXTSOURCE_MANAGER_PASSWORD=${LDAP_CONTEXTSOURCE_MANAGER_PASSWORD:-}
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-SMTP}
-      - MAIL_SMTP_HOST=${MAIL_SMTP_HOST:-localhost}
-      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-25}
+      - MAIL_SMTP_HOST=${MAIL_SMTP_HOST:-postfix}
+      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-8587}
       - STORAGE_DIR=${STORAGE_DIR:-storage}
       - ACCOUNT_NAME=${ACCOUNT_NAME:-devstoreaccount1}
       - ACCOUNT_KEY=${ACCOUNT_KEY:-Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==}
@@ -70,3 +72,22 @@ services:
       - FIXITY_WORKER_FUNC_HOSTS_KEY=${FIXITY_WORKER_FUNC_HOSTS_KEY:-}
     volumes:
       - /persistent/fixity:/persistent/fixity:Z
+
+  postfix:
+    image: docker.io/boky/postfix:latest
+    container_name: "postfix"
+    restart: always
+    security_opt:
+      - label=disable
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "8587:587"
+    environment:
+      - HOSTNAME=${HOSTNAME:-mail.example.com}
+      - ALLOWED_SENDER_DOMAINS=${ALLOWED_SENDER_DOMAINS:-yourdomain.com}
+      - RELAYHOST=${RELAYHOST:-[smtp.sendgrid.net]:587}
+      - RELAYHOST_USERNAME=${RELAYHOST_USERNAME:-apikey}
+      - RELAYHOST_PASSWORD=${RELAYHOST_PASSWORD:-your-api-key}
