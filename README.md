@@ -150,6 +150,7 @@ fixity push
 - `fixity` uses the `docker-compose-fixity.yml` extracted at install time and reads `.env` from the installation directory.
 - `fixity install` copies compose files and database scripts from the bundled package resources. Re-run it after a package upgrade to refresh the compose files and `db/`.
 - `fixity install` always initialises fixity master persistent storage. It prompts once whether to also initialise simulator storage; use `--yes` to skip all prompts (simulator will not be initialised).
+- `fixity install` will generated the key and certificate for access to the Azure Functions. The generated files will be stored in /persistent/fixity.
 - `fixity build` requires a Viridian repository checkout. Use `--project-root <path>` if running from outside the repo root (default: `.`).
 - The image version and registry are read from the installed `docker-compose-fixity.yml`; no flags are needed for `build` or `push`.
 
