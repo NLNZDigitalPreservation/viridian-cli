@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from importlib import metadata, resources
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -22,6 +23,8 @@ MASTER_PROJECT = "viridian-fixity"
 SIMULATORS_COMPOSE = "docker-compose-dev.yml"
 MASTER_COMPOSE = "docker-compose-fixity.yml"
 MASTER_ENV = ".env"
+FIXITY_KEY = "fixity.key"
+FIXITY_CERT = "fixity.cer"
 
 
 def parse_args() -> argparse.Namespace:
@@ -357,6 +360,52 @@ def _install_packaged_assets(install_path: Path) -> None:
     print(f"  Installed: {db_dst}/")
 
 
+def _generate_fixity_certificate_assets(data_path: Path) -> None:
+    persistent_fixity_path = data_path / DEFAULT_CONFIG_SUBDIR
+    persistent_fixity_path.mkdir(parents=True, exist_ok=True)
+
+    key_path = persistent_fixity_path / FIXITY_KEY
+    cert_path = persistent_fixity_path / FIXITY_CERT
+
+    if key_path.exists() and cert_path.exists():
+        print(f"  Skipped (already exists): {key_path}")
+        print(f"  Skipped (already exists): {cert_path}")
+        return
+
+    if shutil.which("openssl") is None:
+        raise RuntimeError("openssl is required to generate fixity.key and fixity.cer.")
+
+    with tempfile.TemporaryDirectory(dir=str(persistent_fixity_path)) as temp_dir:
+        temp_key = Path(temp_dir) / FIXITY_KEY
+        temp_cert = Path(temp_dir) / FIXITY_CERT
+        _run(
+            [
+                "openssl",
+                "req",
+                "-x509",
+                "-newkey",
+                "rsa:2048",
+                "-sha256",
+                "-days",
+                "3650",
+                "-nodes",
+                "-subj",
+                "/CN=fixity",
+                "-keyout",
+                str(temp_key),
+                "-out",
+                str(temp_cert),
+            ]
+        )
+        shutil.move(str(temp_key), key_path)
+        shutil.move(str(temp_cert), cert_path)
+
+    key_path.chmod(0o600)
+    cert_path.chmod(0o644)
+    print(f"  Created:  {key_path}")
+    print(f"  Created:  {cert_path}")
+
+
 def cmd_install(args: argparse.Namespace) -> None:
     username = getpass.getuser()
     group_name = grp.getgrgid(os.getgid()).gr_name
@@ -397,6 +446,8 @@ def cmd_install(args: argparse.Namespace) -> None:
     # Always initialise fixity master persistent storage.
     print("\nInitialising persistent storage...")
     _ensure_master_paths(data_path)
+    print("Initialising fixity certificate assets...")
+    _generate_fixity_certificate_assets(data_path)
 
     # Optionally initialise simulator storage.
     if args.yes:
