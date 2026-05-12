@@ -144,6 +144,154 @@ Push the tagged image to Azure Container Registry:
 fixity push
 ```
 
+### Azure Blob Storage Management (pyaz)
+
+The `pyaz` module provides commands for managing Azure Blob Storage operations, including uploading files, managing containers, and persisting metadata to the Rosetta database.
+
+#### Commands
+
+The command syntax is:
+
+```bash
+python -m pyaz.cli <command> [options]
+```
+
+Available commands:
+
+| Command | Description                                       |
+| ------- | ------------------------------------------------- |
+| `cc`    | Create a container                                |
+| `dc`    | Delete a container                                |
+| `lc`    | List all containers                               |
+| `lb`    | List blobs in a container                         |
+| `id`    | Import a directory (recursively upload all files) |
+| `if`    | Import a single file                              |
+| `db`    | Delete a blob                                     |
+
+#### Common Options
+
+```
+--connection-string <str>
+    Azure Storage connection string (default: Azurite local emulator)
+    Environment variable: CONNECTION_STRING
+
+--container-name <str>
+    Name of the blob storage container (default: fixity-dev)
+    Environment variable: CONTAINER_NAME
+
+--rosetta-db-hostname <str>
+    Database hostname (default: localhost)
+    Environment variable: ROSETTA_DB_HOSTNAME
+
+--rosetta-db-port <int>
+    Database port (default: 1521)
+    Environment variable: ROSETTA_DB_PORT
+
+--rosetta-db-username <str>
+    Database username (default: system)
+    Environment variable: ROSETTA_DB_USERNAME
+
+--rosetta-db-password <str>
+    Database password (default: Pass123Word)
+    Environment variable: ROSETTA_DB_PASSWORD
+
+--rosetta-db-sid <str>
+    Database SID
+    Environment variable: ROSETTA_DB_SID
+
+--rosetta-db-service-name <str>
+    Database service name (default: FREEPDB1)
+    Environment variable: ROSETTA_DB_SERVICE_NAME
+
+--rosetta-db-schemaprefix <str>
+    Schema prefix for database tables (default: V2PN)
+    Environment variable: ROSETTA_DB_SCHEMAPREFIX
+```
+
+#### Behavior Flags
+
+```
+--flag-upload-blob-storage true|false
+    Whether to upload blobs to Azure Storage (default: true)
+
+--flag-save-to-db true|false
+    Whether to save blob metadata to the Rosetta database (default: true)
+
+--flag-generate-sql true|false
+    Whether to generate and print SQL INSERT statements (default: true)
+```
+
+#### Examples
+
+##### List containers
+
+```bash
+python -m pyaz.cli lc
+```
+
+##### Create a container
+
+```bash
+python -m pyaz.cli cc --container-name my-container
+```
+
+##### Import a directory
+
+```bash
+python -m pyaz.cli id \
+  --container-name fixity-dev \
+  --prefix-directory /path/to/data \
+  --source-directory /path/to/data
+```
+
+This command:
+
+1. Recursively uploads all files from `--source-directory` to the container
+2. Extracts storage entity type and ID from filenames (defaults to FILE type, or IE for `ie.xml`)
+3. Computes MD5 checksum for each file
+4. Saves file size and metadata to the Rosetta database (PERMANENT_INDEX table)
+5. Generates INSERT SQL statements if `--flag-generate-sql` is true
+
+##### Import a single file
+
+```bash
+python -m pyaz.cli if \
+  --container-name fixity-dev \
+  --source-file /path/to/file.bin \
+  --prefix-directory /path/to
+```
+
+##### List blobs in a container
+
+```bash
+python -m pyaz.cli lb --container-name fixity-dev
+```
+
+##### Delete a blob
+
+```bash
+python -m pyaz.cli db \
+  --container-name fixity-dev \
+  --blob-name path/to/blob.bin
+```
+
+#### Generated SQL
+
+When `--flag-generate-sql true` is set, the module prints fully-rendered SQL INSERT statements to stdout. Redirect to a file for auditing or manual execution:
+
+```bash
+python -m pyaz.cli id \
+  --prefix-directory /path/to/data \
+  --source-directory /path/to/data \
+  --flag-generate-sql true > /tmp/audit.sql
+```
+
+The SQL includes:
+
+- Blob metadata (file size, MD5 checksum, storage entity type)
+- Storage parameters (directory root mapping)
+- All values as literals (no bind parameters)
+
 ## Notes
 
 - `simulator` uses the `docker-compose-dev.yml` extracted at install time. No `.env` file is required.

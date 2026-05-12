@@ -11,3 +11,5 @@ docker~=7.1.0
 python-dotenv~=1.1.1
 artifacts-keyring~=1.0.0
 keyring~=25.7.0
+azure-storage-blob~=12.28.0
+oracledb~=3.4.2
