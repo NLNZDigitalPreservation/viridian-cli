@@ -4,7 +4,7 @@ import mimetypes
 import os
 import random
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from azure.storage.blob import (
     BlobClient,
@@ -17,7 +17,7 @@ from pyaz.db_access_rosetta import PermanentIndexData, StorageParameterData, ros
 
 
 def file_checksum(
-    path: str | Path, algorithm: str = "md5", chunk_size: int = 8192
+    path: Union[str, Path], algorithm: str = "md5", chunk_size: int = 8192
 ) -> Dict[str, Any]:
     """
     Compute checksum for a file.
