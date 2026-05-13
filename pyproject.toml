@@ -24,7 +24,8 @@ dependencies = [
     "aiohttp~=3.13.2",
     "docker~=7.1.0",
     "azure-storage-blob~=12.28.0",
-    "oracledb~=3.4.2"
+    "oracledb~=3.4.2",
+    "python-dotenv~=1.1.1",
 ]
 
 [tool.setuptools]
