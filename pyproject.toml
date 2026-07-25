@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fixity-cli"
+name = "viridian-cli"
 version = "2.0.0"
-description = "Viridian CLI for simulator and fixity container workflows"
+description = "Viridian CLI for simulator, fixity, dashboard and http-proxy container workflows"
 readme = "README.md"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
@@ -35,14 +35,11 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-"fixity" = [
-    "resources/*.yml",
-    "resources/*.template",
-    "resources/db/oracle/*",
-    "resources/db/postgres/*",
+"viridian" = [
+    "resources/*",
+    "resources/**/*",
 ]
 
 [project.scripts]
-fixity = "fixity.cli:main"
-simulator = "fixity.cli:main_simulator"
+fixity = "viridian.cli_fixity:main"
 pyaz = "pyaz.cli:main"

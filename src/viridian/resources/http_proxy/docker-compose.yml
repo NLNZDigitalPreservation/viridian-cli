@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    image: acrdiaanlnzndev.azurecr.io/http-proxy:${app_version}
+    command: --spring.config.additional-location=file:/usr/local/dashboard/
+    container_name: http_proxy
+    hostname: http_proxy
+    restart: always
+    ports:
+      - "8081:443"
+    environment:
+      - PERSIST_PATH=${PERSIST_PATH:-/data/persistent/dashboard}
+    volumes:
+      - /usr/local/dashboard:/usr/local/dashboard
+      - /mnt/ndha-pre-deposit/:/mnt/ndha-pre-deposit/
