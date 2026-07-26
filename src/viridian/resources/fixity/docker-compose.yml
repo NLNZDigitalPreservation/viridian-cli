@@ -1,10 +1,12 @@
 services:
-  fixity_master:
+  fixity:
     image: acrdiaanlnznsbx.azurecr.io/fixity-master:latest
-    container_name: "fixity_master"
+    container_name: "fixity"
     restart: always
+    security_opt:
+      - label=disable
     ports:
-      - "8081:3000"
+      - "3000:3000"
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ROSETTA_PDS_URL=${ROSETTA_PDS_URL:-https://slbpdstest.natlib.govt.nz/pds}
@@ -69,4 +71,4 @@ services:
       - MANAGED_IDENTITY_TOKEN_URL=${MANAGED_IDENTITY_TOKEN_URL:-http://169.254.169.254/metadata/identity/oauth2/token}
       - FIXITY_WORKER_FUNC_HOSTS_KEY=${FIXITY_WORKER_FUNC_HOSTS_KEY:-}
     volumes:
-      - /persistent/fixity:/persistent/fixity:Z
+      - ${SOURCE_PERSISTENT_PATH:-/persistent/fixity}:/persistent/fixity

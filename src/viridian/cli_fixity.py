@@ -6,20 +6,11 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from viridian import __version__ as _viridian_version
 from viridian.config import parse_args_app
-from viridian.utils import run, select_engine, cmd_install, cmd_container
+from viridian.utils import run, select_engine, cmd_install, cmd_container, cmd_info
 
 FIXITY_KEY = "fixity.key"
 FIXITY_CERT = "fixity.cer"
-
-
-def _get_version() -> str:
-    """Return the package version, falling back to the module constant."""
-    try:
-        return metadata.version("viridian-cli")
-    except metadata.PackageNotFoundError:
-        return _viridian_version
 
 
 def generate_fixity_certificate_assets(install_path: Path) -> None:
@@ -70,20 +61,24 @@ def generate_fixity_certificate_assets(install_path: Path) -> None:
 
 def main() -> int:
     try:
+        print(sys.argv[0])
+        cmd = Path(sys.argv[0]).name
+        print(f"Running {cmd}...")
+
         args = parse_args_app()
 
         if args.command == "install":
-            cmd_install(args, app_name="fixity")
+            install_path, _ = cmd_install(app_name="fixity")
             print("Initialising fixity certificate assets...")
-            generate_fixity_certificate_assets(Path(args.install_path))
+            generate_fixity_certificate_assets(install_path)
             return 0
 
-        # if args.command == "info":
-        #     cmd_info(args)
-        #     return 0
+        if args.command == "info":
+            cmd_info(app_name="fixity")
+            return 0
 
         engine = select_engine(args.container_engine)
-        cmd_container(args, engine)
+        cmd_container(args, app_name="fixity", engine=engine)
         return 0
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)

@@ -5,15 +5,19 @@ import json
 import os
 import shutil
 import subprocess
-import tempfile
 from importlib import resources
 from pathlib import Path
 from typing import Dict, List, Optional
+from dotenv import set_key
+
+DEFAULT_INSTALL_PATH = "/usr/local/viridian"
+DEFAULT_DATA_PATH = "/data/viridian"
+
+INSTALL_PATH_KEY = "install_path"
+DATA_PATH_KEY = "data_path"
 
 DEFAULT_CONFIG_SUBDIR = "viridian"
 DEFAULT_CONFIG_FILE = "config.json"
-DEFAULT_INSTALL_PATH = "/usr/local/viridian"
-DEFAULT_DATA_PATH = "/data/viridian"
 
 
 def run(command: List[str], check: bool = True) -> subprocess.CompletedProcess:
@@ -55,12 +59,12 @@ def config_dir() -> Path:
     return Path.home() / ".config" / DEFAULT_CONFIG_SUBDIR
 
 
-def config_file() -> Path:
+def _config_file() -> Path:
     return config_dir() / DEFAULT_CONFIG_FILE
 
 
 def load_config() -> Dict[str, str]:
-    path = config_file()
+    path = _config_file()
     if not path.exists():
         return {}
     try:
@@ -70,58 +74,24 @@ def load_config() -> Dict[str, str]:
         return {}
     if not isinstance(payload, dict):
         return {}
-    return {k: str(v) for k, v in payload.items()}
+    return payload
 
 
 def save_config(config: Dict[str, str]) -> None:
     cfg_dir = config_dir()
     cfg_dir.mkdir(parents=True, exist_ok=True)
-    with config_file().open("w", encoding="utf-8") as fp:
+    with _config_file().open("w", encoding="utf-8") as fp:
         json.dump(config, fp, indent=2, sort_keys=True)
         fp.write("\n")
 
 
-def resolve_install_path(cli_value: Optional[str]) -> Path:
-    if cli_value:
-        return Path(cli_value).expanduser().resolve()
+def persist_path(app_name: str, path_key: str, path: Path | str) -> None:
     cfg = load_config()
-    persisted = cfg.get("install_path")
-    if persisted:
-        return Path(persisted).expanduser().resolve()
-    return Path(DEFAULT_INSTALL_PATH).resolve()
+    if app_name not in cfg:
+        cfg[app_name] = {}
 
-
-def persist_path(path_key: str, path: Path) -> None:
-    cfg = load_config()
-    cfg[path_key] = str(path)
+    cfg[app_name][path_key] = str(path)
     save_config(cfg)
-
-
-def ensure_directory(
-    path: Path, owner: Optional[str] = None, mode: Optional[str] = None
-) -> None:
-    if path.exists():
-        return
-    run(["sudo", "mkdir", "-p", str(path)])
-    if owner is not None:
-        run(["sudo", "chown", "-R", owner, str(path)])
-    if mode is not None:
-        run(["sudo", "chmod", "-R", mode, str(path)])
-
-
-def ensure_simulator_paths(data_path: Path) -> None:
-    username = getpass.getuser()
-    group_name = grp.getgrgid(os.getgid()).gr_name
-    ensure_directory(data_path / "containers", owner=f"{username}:{group_name}")
-    ensure_directory(data_path / "azurite", owner=f"{username}:{group_name}")
-    ensure_directory(data_path / "oracle", owner="54321:54321", mode="777")
-
-
-def ensure_master_paths(data_path: Path) -> None:
-    username = getpass.getuser()
-    group_name = grp.getgrgid(os.getgid()).gr_name
-    ensure_directory(data_path / "containers", owner=f"{username}:{group_name}")
-    ensure_directory(data_path / "fixity", owner=f"{username}:{group_name}")
 
 
 def run_installed_compose(
@@ -193,27 +163,13 @@ def install_packaged_assets(install_path: Path, app_name: str) -> None:
             print(f"  Installed: {dst}")
 
 
-def resolve_path(
-    app_name: str,
-    input_path: str,
-    input_path_key: str,
-    default_path: str,
-    accept_default: bool,
-    prompt_desc: str,
-) -> Path:
+def resolve_path(app_name: str, default_path: str, prompt_desc: str) -> Path:
     # Determine install directory.
-    resolved_default = (
-        Path(input_path, app_name)
-        if accept_default and input_path
-        else Path(default_path, app_name)
-    )
-    if accept_default:
-        resolved_path = Path(resolved_default).expanduser().resolve()
-    else:
-        chosen = prompt(prompt_desc, resolved_default)
-        resolved_path = Path(chosen).expanduser().resolve()
+    resolved_default = Path(default_path, app_name)
+    resolved_default = resolved_default.expanduser().resolve()
 
-    print(f"{prompt_desc}: {resolved_path}")
+    chosen = prompt(prompt_desc, resolved_default)
+    resolved_path = Path(chosen).expanduser().resolve()
 
     # Create directory if needed.
     username = getpass.getuser()
@@ -222,74 +178,137 @@ def resolve_path(
         print(f"  Creating {resolved_path} ...")
         run(["sudo", "mkdir", "-p", str(resolved_path)])
         run(["sudo", "chown", f"{username}:{group_name}", str(resolved_path)])
-        print("  Done.")
-
-    persist_path(input_path_key, resolved_path)
-    print(f"  Saved config: {config_file()}")
+        print(f"  Created: {resolved_path}")
+    else:
+        print(f"  Using existing: {resolved_path}")
 
     return resolved_path
 
 
-def cmd_install(args: argparse.Namespace, app_name: str) -> None:
-    install_path = resolve_path(
-        app_name,
-        args.install_path,
-        "install_path",
-        DEFAULT_INSTALL_PATH,
-        args.yes,
-        "Installation directory",
-    )
-    args.install_path = str(install_path)
+def print_no_braces(obj, indent=2, is_list_item=False):
+    """
+    Recursively print a JSON-like object without displaying curly braces ({})
+    or square brackets ([]). Hierarchy is represented using indentation and
+    line breaks.
 
+    Args:
+        obj: The Python object to print (dict or list).
+        indent: The current indentation level (number of spaces).
+        is_list_item: Whether the current object is a list item. If True,
+            the first key of a dictionary is prefixed with "- ".
+    """
+    space = " " * indent
+
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            # Determine the prefix for the current line.
+            # The first key of a dictionary inside a list is prefixed with "- ".
+            if is_list_item:
+                line_prefix = f"{space}- {key}"
+                is_list_item = False  # Only prefix the first key with "- ".
+            else:
+                line_prefix = f"{space}{key}"
+
+            if isinstance(value, dict):
+                print(f"{line_prefix}:")
+                print_no_braces(value, indent + 2, False)
+
+            elif isinstance(value, list):
+                print(f"{line_prefix}:")
+                for item in value:
+                    if isinstance(item, dict):
+                        # Recursively print dictionary items in the list.
+                        print_no_braces(item, indent + 2, True)
+                    else:
+                        # Print primitive values in the list.
+                        print(f"{space}  - {item}")
+
+            else:
+                print(f"{line_prefix}: {value}")
+
+    elif isinstance(obj, list):
+        for item in obj:
+            if isinstance(item, dict):
+                print_no_braces(item, indent, True)
+            else:
+                print(f"{space}- {item}")
+    # print(yaml.safe_dump(obj, sort_keys=False))
+
+
+def cmd_info(app_name: Optional[str] = None) -> None:
+    cfg = load_config()
+
+    if cfg is None or len(cfg) == 0:
+        print("No installation information found. Run 'install' first.")
+        return
+
+    if app_name is None:
+        print("Installation information:")
+        print_no_braces(cfg)
+        return
+
+    app_cfg = cfg.get(app_name)
+    if app_cfg is None or len(app_cfg) == 0:
+        print(
+            f"No installation information found for {app_name}. Run '{app_name} install' first."
+        )
+        return
+
+    print(f"Installation information for {app_name}:")
+    print_no_braces(app_cfg)
+
+
+def cmd_install(app_name: str) -> None:
+    # Initialize installation directory.
+    install_path = resolve_path(
+        app_name, DEFAULT_INSTALL_PATH, "Installation directory"
+    )
     # Copy bundled compose resources files.
     install_packaged_assets(install_path, app_name)
 
-    data_path = resolve_path(
-        app_name,
-        args.data_path,
-        "data_path",
-        DEFAULT_DATA_PATH,
-        args.yes,
-        "Persistent storage root",
+    # Initialize persistent data directory.
+    data_path = resolve_path(app_name, DEFAULT_DATA_PATH, "Persistent storage root")
+
+    persist_path(app_name, INSTALL_PATH_KEY, install_path)
+    persist_path(app_name, DATA_PATH_KEY, data_path)
+    print(f"Saved config: {_config_file()}")
+
+    env_file = install_path / ".env"
+    if env_file.exists():
+        set_key(
+            str(env_file), "SOURCE_INSTALL_PATH", str(install_path), quote_mode="never"
+        )
+
+        set_key(
+            str(env_file), "SOURCE_PERSISTENT_PATH", str(data_path), quote_mode="never"
+        )
+        print(f"Updated .env: {env_file}")
+
+    return install_path, data_path
+
+
+def cmd_container(args: argparse.Namespace, app_name, engine: str) -> None:
+    cfg = load_config()
+    if cfg is None or app_name not in cfg:
+        app_cfg = {}
+    else:
+        app_cfg = cfg[app_name]
+    install_path_str = app_cfg.get(
+        INSTALL_PATH_KEY, Path(DEFAULT_INSTALL_PATH, app_name).expanduser().resolve()
     )
-    args.data_path = str(data_path)
-
-    # Always initialise fixity master persistent storage.
-    print("\nInitialising persistent storage...")
-    ensure_master_paths(data_path)
-
-
-def cmd_container(args: argparse.Namespace, engine: str) -> None:
-    data_path = Path(args.data_path)
-    install_path = Path(args.install_path)
+    install_path = Path(install_path_str).expanduser().resolve()
 
     if args.command == "up":
-        ensure_master_paths(data_path)
-        run_installed_compose(
-            engine,
-            install_path,
-            args.app_name,
-            ["up", "--detach"],
-        )
+        run_installed_compose(engine, install_path, args.app_name, ["up", "--detach"])
         return
     if args.command == "down":
-        run_installed_compose(
-            engine,
-            install_path,
-            args.app_name,
-            ["down"],
-        )
+        run_installed_compose(engine, install_path, args.app_name, ["down"])
         return
     if args.command == "logs":
         compose_args = ["logs"]
         if not args.no_follow:
             compose_args.append("-f")
-        run_installed_compose(
-            engine,
-            install_path,
-            args.app_name,
-            compose_args,
-        )
+        run_installed_compose(engine, install_path, args.app_name, compose_args)
         return
     if args.command == "exec":
         run([engine, "exec", "-it", args.app_name, args.shell])

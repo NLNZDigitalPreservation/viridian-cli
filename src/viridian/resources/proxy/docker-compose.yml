@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    image: acrdiaanlnzndev.azurecr.io/pod-proxy:${app_version}
+    command: --spring.config.additional-location=file:/usr/local/proxy/
+    container_name: proxy
+    hostname: proxy
+    restart: always
+    ports:
+      - "8081:443"
+    environment:
+      - PERSIST_PATH=${PERSIST_PATH:-/data/persistent/proxy}
+    volumes:
+      - /usr/local/proxy:/usr/local/proxy
+      - /mnt/ndha-pre-deposit/:/mnt/ndha-pre-deposit/

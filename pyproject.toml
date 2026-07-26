@@ -26,6 +26,7 @@ dependencies = [
     "azure-storage-blob~=12.28.0",
     "oracledb~=3.4.2",
     "python-dotenv~=1.1.1",
+    "PyYAML~=6.0.3",
 ]
 
 [tool.setuptools]
@@ -42,4 +43,6 @@ where = ["src"]
 
 [project.scripts]
 fixity = "viridian.cli_fixity:main"
+dashboard = "viridian.cli_dashboard:main"
+pod_proxy = "viridian.cli_pod_proxy:main"
 pyaz = "pyaz.cli:main"

@@ -1,9 +1,12 @@
 import argparse
+import getpass
+import grp
+import os
 import subprocess
 import sys
 from importlib import metadata
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 DEFAULT_DATA_PATH = "/persistent"
 SIMULATORS_PROJECT = "viridian-dev"
@@ -17,7 +20,7 @@ from viridian.utils import (
     select_compose_command,
     resource_file,
     config_dir,
-    config_file,
+    _config_file,
     load_config,
     save_config,
     resolve_install_path,
@@ -44,50 +47,30 @@ from viridian.utils import (
 )
 
 
-def cmd_simulators(args: argparse.Namespace, engine: str) -> None:
-    data_path = Path(args.data_path)
-    install_path = resolve_install_path(args.install_path)
-
-    if args.command == "up":
-        ensure_simulator_paths(data_path)
-        run_installed_compose(
-            engine,
-            install_path,
-            SIMULATORS_COMPOSE,
-            None,
-            SIMULATORS_PROJECT,
-            ["up", "--detach"],
-        )
+def ensure_directory(
+    path: Path, owner: Optional[str] = None, mode: Optional[str] = None
+) -> None:
+    if path.exists():
         return
-    if args.command == "down":
-        run_installed_compose(
-            engine,
-            install_path,
-            SIMULATORS_COMPOSE,
-            None,
-            SIMULATORS_PROJECT,
-            ["down"],
-        )
-        return
-    if args.command == "logs":
-        compose_args = ["logs"]
-        if not args.no_follow:
-            compose_args.append("-f")
-        run_installed_compose(
-            engine,
-            install_path,
-            SIMULATORS_COMPOSE,
-            None,
-            SIMULATORS_PROJECT,
-            compose_args,
-        )
-        return
-    raise RuntimeError(f"Unsupported simulators command: {args.command}")
+    run(["sudo", "mkdir", "-p", str(path)])
+    if owner is not None:
+        run(["sudo", "chown", "-R", owner, str(path)])
+    if mode is not None:
+        run(["sudo", "chmod", "-R", mode, str(path)])
 
 
-def main_simulator() -> int:
+def ensure_simulator_paths(data_path: Path) -> None:
+    username = getpass.getuser()
+    group_name = grp.getgrgid(os.getgid()).gr_name
+    ensure_directory(data_path / "containers", owner=f"{username}:{group_name}")
+    ensure_directory(data_path / "azurite", owner=f"{username}:{group_name}")
+    ensure_directory(data_path / "oracle", owner="54321:54321", mode="777")
+
+
+def main() -> int:
     try:
         args = parse_args_app("simulator")
+
         engine = select_engine(args.container_engine)
         cmd_simulators(args, engine)
         return 0
