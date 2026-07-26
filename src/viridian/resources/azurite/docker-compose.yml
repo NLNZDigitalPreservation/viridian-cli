@@ -16,22 +16,4 @@ services:
       - "0.0.0.0:10001:10001"
       - "0.0.0.0:10002:10002"
     volumes:
-      - /persistent/azurite:/data
-  oracle:
-    image: container-registry.oracle.com/database/free:latest
-    container_name: "oracle"
-    restart: always
-    security_opt:
-      - label=disable
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    ports:
-      - "0.0.0.0:1521:1521"
-      - "0.0.0.0:5500:5500"
-    environment:
-      - ORACLE_PWD=Pass123Word
-      - ORACLE_EDITION=FREE
-    volumes:
-      - /persistent/oracle:/opt/oracle/oradata
+      - ${SOURCE_PERSISTENT_PATH: -/persistent/azurite}:/data

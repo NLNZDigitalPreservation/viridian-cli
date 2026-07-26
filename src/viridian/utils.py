@@ -21,6 +21,7 @@ DEFAULT_CONFIG_FILE = "config.json"
 
 
 def run(command: List[str], check: bool = True) -> subprocess.CompletedProcess:
+    print(f"Running: {' '.join(command)}")
     return subprocess.run(command, text=True, check=check)
 
 
@@ -274,15 +275,13 @@ def cmd_install(app_name: str) -> None:
     print(f"Saved config: {_config_file()}")
 
     env_file = install_path / ".env"
-    if env_file.exists():
-        set_key(
-            str(env_file), "SOURCE_INSTALL_PATH", str(install_path), quote_mode="never"
-        )
 
-        set_key(
-            str(env_file), "SOURCE_PERSISTENT_PATH", str(data_path), quote_mode="never"
-        )
-        print(f"Updated .env: {env_file}")
+    if not env_file.exists():
+        env_file.write_text("")
+
+    set_key(str(env_file), "SOURCE_INSTALL_PATH", str(install_path), quote_mode="never")
+    set_key(str(env_file), "SOURCE_PERSISTENT_PATH", str(data_path), quote_mode="never")
+    print(f"Updated .env: {env_file}")
 
     return install_path, data_path
 

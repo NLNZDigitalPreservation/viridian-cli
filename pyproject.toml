@@ -42,7 +42,9 @@ where = ["src"]
 ]
 
 [project.scripts]
-fixity = "viridian.cli_fixity:main"
-dashboard = "viridian.cli_dashboard:main"
-pod_proxy = "viridian.cli_pod_proxy:main"
+fixity = "viridian.cli:main"
+dashboard = "viridian.cli:main"
+proxy =  "viridian.cli:main"
+azurite =  "viridian.cli:main"
+oracle =  "viridian.cli:main"
 pyaz = "pyaz.cli:main"
