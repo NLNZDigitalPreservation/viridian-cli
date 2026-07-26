@@ -39,6 +39,7 @@ where = ["src"]
 "viridian" = [
     "resources/*",
     "resources/**/*",
+    "resources/**/.env",
 ]
 
 [project.scripts]

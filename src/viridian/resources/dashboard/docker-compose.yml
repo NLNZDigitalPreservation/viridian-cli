@@ -10,5 +10,5 @@ services:
     environment:
       - PERSIST_PATH=${PERSIST_PATH:-/data/persistent/dashboard}
     volumes:
-      - ${SOURCE_INSTALL_PATH:-/usr/local/dashboard}:/usr/local/dashboard
+      - ${SOURCE_INSTALL_PATH}:/usr/local/dashboard
       - /mnt/ndha-pre-deposit/:/mnt/ndha-pre-deposit/

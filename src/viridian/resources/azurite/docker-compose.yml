@@ -16,4 +16,4 @@ services:
       - "0.0.0.0:10001:10001"
       - "0.0.0.0:10002:10002"
     volumes:
-      - ${SOURCE_PERSISTENT_PATH: -/persistent/azurite}:/data
+      - ${SOURCE_PERSISTENT_PATH}:/data

@@ -16,4 +16,4 @@ services:
       - ORACLE_PWD=Pass123Word
       - ORACLE_EDITION=FREE
     volumes:
-      - ${SOURCE_PERSISTENT_PATH: -/persistent/oracle}:/opt/oracle/oradata
+      - ${SOURCE_PERSISTENT_PATH}:/opt/oracle/oradata
