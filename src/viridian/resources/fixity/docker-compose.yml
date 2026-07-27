@@ -3,7 +3,7 @@ networks:
     external: true
 services:
   fixity:
-    image: acrdiaanlnznsbx.azurecr.io/fixity-master:${FIXITY_VERSION:-latest}
+    image: acrdiaanlnzndev.azurecr.io/fixity-master:${FIXITY_VERSION:-latest}
     container_name: "fixity"
     restart: always
     security_opt:
