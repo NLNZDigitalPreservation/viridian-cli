@@ -1,3 +1,7 @@
+networks:
+  viridian-network:
+    external: true
+
 services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:${AZURITE_VERSION:-latest}
@@ -17,3 +21,5 @@ services:
       - "0.0.0.0:10002:10002"
     volumes:
       - ${SOURCE_PERSISTENT_PATH}:/data
+    networks:
+      - viridian-network

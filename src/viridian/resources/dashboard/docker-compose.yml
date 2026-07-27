@@ -1,3 +1,6 @@
+networks:
+  viridian-network:
+    external: true
 services:
   dashboard:
     image: acrdiaanlnzndev.azurecr.io/deposit-dashboard:${DASHBOARD_VERSION:-latest}
@@ -7,6 +10,8 @@ services:
     restart: always
     ports:
       - "1901:1901"
+    networks:
+      - viridian-network
     environment:
       - PERSIST_PATH=${PERSIST_PATH:-/data/persistent/dashboard}
     volumes:

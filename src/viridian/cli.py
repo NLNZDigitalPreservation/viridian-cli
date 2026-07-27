@@ -6,7 +6,14 @@ import subprocess
 import tempfile
 from pathlib import Path
 from viridian.config import parse_args_app
-from viridian.utils import run, select_engine, cmd_install, cmd_container, cmd_info
+from viridian.utils import (
+    run,
+    select_engine,
+    cmd_install,
+    cmd_container,
+    cmd_info,
+    create_network,
+)
 
 FIXITY_KEY = "fixity.key"
 FIXITY_CERT = "fixity.cer"
@@ -66,6 +73,11 @@ def main() -> int:
 
         args = parse_args_app()
 
+        engine = select_engine(args.container_engine)
+
+        # Ensure the network
+        create_network(engine)
+
         if args.command == "install":
             install_path, _ = cmd_install(app_name=app_name)
 
@@ -78,7 +90,6 @@ def main() -> int:
             cmd_info(app_name=app_name)
             return 0
 
-        engine = select_engine(args.container_engine)
         cmd_container(args, app_name=app_name, engine=engine)
         return 0
     except RuntimeError as exc:

@@ -127,6 +127,26 @@ def prompt(message: str, default: str) -> str:
     return answer if answer else default
 
 
+def create_network(engine: str, network_name: str = "viridian-network") -> None:
+    runtime = shutil.which(engine)
+    if runtime is None:
+        raise RuntimeError(f"{engine} not found.")
+
+    result = subprocess.run(
+        [runtime, "network", "inspect", network_name],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    if result.returncode != 0:
+        subprocess.run(
+            [runtime, "network", "create", network_name],
+            check=True,
+        )
+
+    print(f"Using network: {network_name}")
+
+
 def install_packaged_assets(install_path: Path, app_name: str) -> None:
     """Copy every file and sub-directory from the app's resources folder to *install_path*."""
     app_resources = resource_file(app_name)
@@ -304,6 +324,12 @@ def cmd_container(args: argparse.Namespace, app_name, engine: str) -> None:
         return
     if args.command == "down":
         run_installed_compose(engine, install_path, app_name, ["down"])
+        return
+    if args.command == "restart":
+        run_installed_compose(engine, install_path, app_name, ["restart"])
+        return
+    if args.command == "status":
+        run_installed_compose(engine, install_path, app_name, ["ps"])
         return
     if args.command == "logs":
         compose_args = ["logs"]

@@ -1,3 +1,6 @@
+networks:
+  viridian-network:
+    external: true
 services:
   fixity:
     image: acrdiaanlnznsbx.azurecr.io/fixity-master:${FIXITY_VERSION:-latest}
@@ -7,6 +10,8 @@ services:
       - label=disable
     ports:
       - "3000:3000"
+    networks:
+      - viridian-network
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ROSETTA_PDS_URL=${ROSETTA_PDS_URL:-https://slbpdstest.natlib.govt.nz/pds}

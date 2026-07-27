@@ -1,3 +1,6 @@
+networks:
+  viridian-network:
+    external: true
 services:
   oracle:
     image: container-registry.oracle.com/database/free:${ORACLE_VERSION:-latest}
@@ -12,6 +15,8 @@ services:
     ports:
       - "0.0.0.0:1521:1521"
       - "0.0.0.0:5500:5500"
+    networks:
+      - viridian-network
     environment:
       - ORACLE_PWD=Pass123Word
       - ORACLE_EDITION=FREE

@@ -1,3 +1,6 @@
+networks:
+  viridian-network:
+    external: true
 services:
   proxy:
     image: acrdiaanlnzndev.azurecr.io/http-proxy:${PROXY_VERSION:-latest}
@@ -7,3 +10,5 @@ services:
     restart: always
     ports:
       - "8081:443"
+    networks:
+      - viridian-network

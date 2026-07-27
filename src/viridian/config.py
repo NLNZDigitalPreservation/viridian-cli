@@ -27,7 +27,7 @@ def parse_args_app(app_name: str = "") -> argparse.Namespace:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for name in ("up", "down", "restart", "status"):
+    for name in ("up", "down", "restart", "status", "exec"):
         subparsers.add_parser(name, help=f"{name} {app_name} services")
 
     logs_cmd = subparsers.add_parser("logs", help=f"Follow {app_name} logs")
@@ -43,5 +43,7 @@ def parse_args_app(app_name: str = "") -> argparse.Namespace:
     subparsers.add_parser(
         "info", help="Show resolved installation path and persistent directory status"
     )
+
+    parser.add_argument("--shell", default="bash", help="Shell to use for exec command")
 
     return parser.parse_args()
