@@ -1,6 +1,6 @@
 services:
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
+    image: mcr.microsoft.com/azure-storage/azurite:${AZURITE_VERSION:-latest}
     command: "node /usr/local/bin/azurite -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --skipApiVersionCheck"
     container_name: "azurite"
     hostname: azurite

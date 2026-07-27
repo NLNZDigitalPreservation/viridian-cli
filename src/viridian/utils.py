@@ -104,7 +104,7 @@ def run_installed_compose(
     compose_file = install_path / "docker-compose.yml"
     if not compose_file.exists():
         raise FileNotFoundError(
-            f"{compose_file} not found. Run 'fixity install' first."
+            f"{compose_file} not found. Run '{project_name} install' first."
         )
     compose_cmd = select_compose_command(engine)
     cmd = compose_cmd + ["-p", project_name, "-f", str(compose_file)]
@@ -113,21 +113,6 @@ def run_installed_compose(
         cmd += ["--env-file", str(env_file)]
     cmd += extra
     run(cmd)
-
-
-def version_from_compose(install_path: Path) -> str:
-    """Read the image tag from the installed docker-compose-fixity.yml."""
-    compose_file = install_path / "docker-compose.yml"
-    if not compose_file.exists():
-        return "latest"
-    with compose_file.open("r", encoding="utf-8") as fp:
-        for line in fp:
-            stripped = line.strip()
-            if stripped.startswith("image:"):
-                # e.g. "image: registry/fixity-master:2.0.0"
-                tag_part = stripped.split(":")[-1].strip()
-                return tag_part if tag_part else "latest"
-    return "latest"
 
 
 def path_state(path: Path) -> str:
@@ -173,12 +158,19 @@ def resolve_path(app_name: str, default_path: str, prompt_desc: str) -> Path:
     resolved_path = Path(chosen).expanduser().resolve()
 
     # Create directory if needed.
-    username = getpass.getuser()
-    group_name = grp.getgrgid(os.getgid()).gr_name
+    if app_name == "oracle":
+        username = "54321"
+        group_name = "54321"
+    else:
+        username = getpass.getuser()
+        group_name = grp.getgrgid(os.getgid()).gr_name
+
     if not resolved_path.exists():
         print(f"  Creating {resolved_path} ...")
         run(["sudo", "mkdir", "-p", str(resolved_path)])
         run(["sudo", "chown", f"{username}:{group_name}", str(resolved_path)])
+        if app_name == "oracle":
+            run(["sudo", "chmod", "777", str(resolved_path)])
         print(f"  Created: {resolved_path}")
     else:
         print(f"  Using existing: {resolved_path}")
@@ -260,6 +252,8 @@ def cmd_info(app_name: Optional[str] = None) -> None:
 
 
 def cmd_install(app_name: str) -> None:
+    app_version = prompt(f"Please choose a version for {app_name}", "latest")
+
     # Initialize installation directory.
     install_path = resolve_path(
         app_name, DEFAULT_INSTALL_PATH, "Installation directory"
@@ -270,15 +264,23 @@ def cmd_install(app_name: str) -> None:
     # Initialize persistent data directory.
     data_path = resolve_path(app_name, DEFAULT_DATA_PATH, "Persistent storage root")
 
+    persist_path(app_name, "version", app_version)
     persist_path(app_name, INSTALL_PATH_KEY, install_path)
     persist_path(app_name, DATA_PATH_KEY, data_path)
+
     print(f"Saved config: {_config_file()}")
 
+    env_template = install_path / "template.env"
     env_file = install_path / ".env"
 
-    if not env_file.exists():
+    if not env_template.exists():
         env_file.write_text("")
+    else:
+        shutil.copy2(env_template, env_file)
 
+    set_key(
+        str(env_file), f"{app_name.upper()}_VERSION", app_version, quote_mode="never"
+    )
     set_key(str(env_file), "SOURCE_INSTALL_PATH", str(install_path), quote_mode="never")
     set_key(str(env_file), "SOURCE_PERSISTENT_PATH", str(data_path), quote_mode="never")
     print(f"Updated .env: {env_file}")
@@ -298,18 +300,18 @@ def cmd_container(args: argparse.Namespace, app_name, engine: str) -> None:
     install_path = Path(install_path_str).expanduser().resolve()
 
     if args.command == "up":
-        run_installed_compose(engine, install_path, args.app_name, ["up", "--detach"])
+        run_installed_compose(engine, install_path, app_name, ["up", "--detach"])
         return
     if args.command == "down":
-        run_installed_compose(engine, install_path, args.app_name, ["down"])
+        run_installed_compose(engine, install_path, app_name, ["down"])
         return
     if args.command == "logs":
         compose_args = ["logs"]
         if not args.no_follow:
             compose_args.append("-f")
-        run_installed_compose(engine, install_path, args.app_name, compose_args)
+        run_installed_compose(engine, install_path, app_name, compose_args)
         return
     if args.command == "exec":
-        run([engine, "exec", "-it", args.app_name, args.shell])
+        run([engine, "exec", "-it", app_name, args.shell])
         return
-    raise RuntimeError(f"Unsupported {args.app_name} command: {args.command}")
+    raise RuntimeError(f"Unsupported {app_name} command: {args.command}")

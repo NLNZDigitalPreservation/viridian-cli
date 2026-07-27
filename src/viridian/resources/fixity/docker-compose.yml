@@ -1,6 +1,6 @@
 services:
   fixity:
-    image: acrdiaanlnznsbx.azurecr.io/fixity-master:latest
+    image: acrdiaanlnznsbx.azurecr.io/fixity-master:${FIXITY_VERSION:-latest}
     container_name: "fixity"
     restart: always
     security_opt:

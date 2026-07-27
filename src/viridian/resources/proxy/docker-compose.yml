@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: acrdiaanlnzndev.azurecr.io/http-proxy:${app_version}
+    image: acrdiaanlnzndev.azurecr.io/http-proxy:${PROXY_VERSION:-latest}
     command: nginx -g "daemon off;"
     container_name: proxy
     hostname: proxy

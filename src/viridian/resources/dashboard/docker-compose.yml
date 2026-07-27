@@ -1,12 +1,12 @@
 services:
   dashboard:
-    image: acrdiaanlnzndev.azurecr.io/deposit-dashboard:${app_version}
+    image: acrdiaanlnzndev.azurecr.io/deposit-dashboard:${DASHBOARD_VERSION:-latest}
     command: --spring.config.additional-location=file:/usr/local/dashboard/
     container_name: dashboard
     hostname: dashboard
     restart: always
     ports:
-      - "8081:1901"
+      - "1901:1901"
     environment:
       - PERSIST_PATH=${PERSIST_PATH:-/data/persistent/dashboard}
     volumes:
