@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from dotenv import set_key
 
-DEFAULT_INSTALL_PATH = "/usr/local/viridian"
-DEFAULT_DATA_PATH = "/data/viridian"
+DEFAULT_INSTALL_PATH = "/data/viridian/conf"
+DEFAULT_DATA_PATH = "/data/viridian/persistent"
 
 INSTALL_PATH_KEY = "install_path"
 DATA_PATH_KEY = "data_path"
@@ -187,10 +187,10 @@ def resolve_path(app_name: str, default_path: str, prompt_desc: str) -> Path:
 
     if not resolved_path.exists():
         print(f"  Creating {resolved_path} ...")
-        run(["sudo", "mkdir", "-p", str(resolved_path)])
-        run(["sudo", "chown", f"{username}:{group_name}", str(resolved_path)])
+        run(["mkdir", "-p", str(resolved_path)])
+        run(["chown", f"{username}:{group_name}", str(resolved_path)])
         if app_name == "oracle":
-            run(["sudo", "chmod", "777", str(resolved_path)])
+            run(["chmod", "777", str(resolved_path)])
         print(f"  Created: {resolved_path}")
     else:
         print(f"  Using existing: {resolved_path}")

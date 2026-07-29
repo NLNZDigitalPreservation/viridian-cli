@@ -1,363 +1,242 @@
 # fixity-cli
 
-`fixity-cli` is the Python command-line package for Viridian local operations.
-It supports Python 3.9 and newer.
+`fixity-cli` is a Python-based command-line interface for Viridian local operations. It streamlines the management of the Viridian stack, simulator environments, and Azure Blob Storage integrations.
 
-## What the CLI provides
+**Requirements:** Python 3.9 or newer.
 
-Two console entrypoints are installed:
+---
 
-- **`simulator`** — manages the Azurite and Oracle simulator stack:
-  - `up`
-  - `down`
-  - `logs`
-- **`fixity`** — manages the fixity master node, plus installation:
-  - `install`
-  - `info`
-  - `up`
-  - `down`
-  - `logs`
-  - `exec`
-  - `build`
-  - `push`
-- Packaged runtime assets:
-  - `docker-compose-dev.yml`
-  - `docker-compose-fixity.yml`
-  - `db/oracle/*`
-  - `db/postgres/*`
+## Overview
 
-## Install
+The package installs two primary console entry points:
 
-From the `cli_tools/` directory:
+### 1. `simulator`
 
-```bash
-python3 -m pip install .
-```
+Manages the Azurite (Storage) and Oracle (Database) simulator stack.
 
-After installation the two console entrypoints are available:
+- **Commands:** `up`, `down`, `logs`
 
-```bash
-fixity --help
-simulator --help
-```
+### 2. `fixity`
 
-Print the installed package version:
+Manages the Fixity master node and installation lifecycle.
+
+- **Commands:** `install`, `info`, `up`, `down`, `logs`, `exec`, `build`, `push`
+
+### Packaged Assets
+
+The CLI bundles the following runtime assets:
+
+- `docker-compose-dev.yml`
+- `docker-compose-fixity.yml`
+- Database scripts: `db/oracle/*` and `db/postgres/*`
+
+---
+
+## Installation
+
+### Ubuntu 24.04+ (Development)
+
+The following steps install Git and `pipx`, then perform a clean global installation of the CLI:
 
 ```bash
-fixity --version
-simulator --version
+# Update system and install base dependencies
+sudo apt update && sudo apt install -y git pipx
+
+# Ensure pipx is properly configured globally
+sudo pipx install pipx --force
+sudo pipx ensurepath
+
+# Clean up local pipx remnants and reinstall globally
+sudo apt purge --autoremove pipx
+sudo -i pipx install --global --force pipx
+sudo -i rm -rf ~/.local/share/pipx ~/.local/bin/pipx ~/.local/pipx ~/.cache/pipx ~/.config/pipx
+
+# Refresh shell hash
+hash -r
+sudo -i hash -r
+
+# Install the CLI directly from GitHub
+sudo pipx install --global --force git+https://github.com/NLNZDigitalPreservation/viridian-cli.git
 ```
 
-## Setup
+### RHEL
 
-Install the fixity master stack to the installation directory (default
-`/usr/local/fixity`):
+For RHEL environments using Python 3.12:
+
+```bash
+sudo pip3.12 install https://github.com/NLNZDigitalPreservation/viridian-cli/archive/refs/heads/main.zip --force-reinstall
+```
+
+---
+
+## Setup & Configuration
+
+### Initial Installation
+
+To install the Fixity master stack to the default directory (`/usr/local/fixity`):
 
 ```bash
 fixity install
 ```
 
-This command:
+**The installation process performs the following:**
 
-1. Prompts for an installation directory (default `/usr/local/fixity`).
-2. Copies `docker-compose-dev.yml`, `docker-compose-fixity.yml`, and `db/`
-   from the bundled package resources.
-3. Creates a `.env` file in the installation directory from the bundled
-   template if one does not already exist.
-4. Initialises fixity master persistent storage directories automatically.
-5. Prompts whether to enable the simulator — if yes, initialises simulator
-   persistent storage directories as well.
+1.  **Path Selection:** Prompts for an installation directory.
+2.  **Asset Deployment:** Copies bundled Compose files and DB scripts.
+3.  **Environment Setup:** Creates a `.env` file from a template (if not already present).
+4.  **Storage Initialization:** Creates persistent storage directories for Fixity.
+5.  **Simulator Setup:** Optionally initializes simulator storage directories.
 
-Use `--yes` / `-y` to accept all defaults and skip prompts (simulator is not
-enabled in non-interactive mode):
+**Non-Interactive Install:**
+Use the `--yes` flag to accept all defaults (Note: the simulator is **not** enabled in this mode).
 
 ```bash
 fixity install --yes
 ```
 
-Edit the `.env` file in the installation directory before starting any
-services.
+> [!IMPORTANT]
+> Edit the `.env` file in your installation directory before starting services for the first time.
 
-Show the resolved installation path and the state of all managed directories:
+### View Installation Status
+
+To see the resolved installation path and the state of managed directories:
 
 ```bash
 fixity info
 ```
 
-## Usage
+---
 
-### Simulators
+## Usage Guide
 
-Start Azurite and Oracle:
+### Managing Simulators
 
-```bash
-simulator up
-```
-
-Stop the simulator stack:
+Start/stop the Azurite and Oracle stack:
 
 ```bash
-simulator down
+simulator up       # Start stack
+simulator logs     # Follow logs
+simulator down     # Stop stack
 ```
 
-Follow simulator logs:
+### Managing the Fixity Master Node
+
+Commands for the primary Fixity service:
 
 ```bash
-simulator logs
+fixity up          # Start master stack
+fixity logs        # Follow logs
+fixity exec        # Open a shell inside the running master container
+fixity down        # Stop master stack
 ```
 
-### Fixity master node
+### Development Commands
 
-Start the master stack:
+- **Build:** Create the master image from a Viridian repository checkout.
+  ```bash
+  fixity build --project-root /path/to/repo
+  ```
+- **Push:** Push the tagged image to the Azure Container Registry defined in the compose file.
+  ```bash
+  fixity push
+  ```
 
-```bash
-fixity up
-```
+---
 
-Stop the master stack:
+## Azure Blob Storage Management (`pyaz`)
 
-```bash
-fixity down
-```
+The `pyaz` module handles Azure Blob Storage operations and Rosetta database metadata persistence.
 
-Follow master logs:
-
-```bash
-fixity logs
-```
-
-Open a shell in the running `fixity_master` container:
-
-```bash
-fixity exec
-```
-
-Build the master image from the Viridian repository checkout:
-
-```bash
-fixity build
-```
-
-Push the tagged image to Azure Container Registry:
-
-```bash
-fixity push
-```
-
-### Azure Blob Storage Management (pyaz)
-
-The `pyaz` module provides commands for managing Azure Blob Storage operations, including uploading files, managing containers, and persisting metadata to the Rosetta database.
-
-#### Commands
-
-The command syntax is:
+### Command Syntax
 
 ```bash
 python -m pyaz.cli <command> [options]
 ```
 
-Available commands:
+### Available Commands
 
-| Command | Description                                       |
-| ------- | ------------------------------------------------- |
-| `cc`    | Create a container                                |
-| `dc`    | Delete a container                                |
-| `lc`    | List all containers                               |
-| `lb`    | List blobs in a container                         |
-| `id`    | Import a directory (recursively upload all files) |
-| `if`    | Import a single file                              |
-| `db`    | Delete a blob                                     |
+| Command | Description                                                  |
+| :------ | :----------------------------------------------------------- |
+| `cc`    | **Create** a container                                       |
+| `dc`    | **Delete** a container                                       |
+| `lc`    | **List** all containers                                      |
+| `lb`    | **List** blobs within a container                            |
+| `id`    | **Import Directory**: Recursively upload files and update DB |
+| `if`    | **Import File**: Upload a single file and update DB          |
+| `db`    | **Delete** a specific blob                                   |
 
-#### Common Options
+### Configuration Options
 
-```
---connection-string <str>
-    Azure Storage connection string (default: Azurite local emulator)
-    Environment variable: CONNECTION_STRING
+These can be passed as flags or set as environment variables:
 
---container-name <str>
-    Name of the blob storage container (default: fixity-dev)
-    Environment variable: CONTAINER_NAME
+| Option                      | Env Variable              | Default         |
+| :-------------------------- | :------------------------ | :-------------- |
+| `--connection-string`       | `CONNECTION_STRING`       | (Azurite Local) |
+| `--container-name`          | `CONTAINER_NAME`          | `fixity-dev`    |
+| `--rosetta-db-hostname`     | `ROSETTA_DB_HOSTNAME`     | `localhost`     |
+| `--rosetta-db-username`     | `ROSETTA_DB_USERNAME`     | `system`        |
+| `--rosetta-db-service-name` | `ROSETTA_DB_SERVICE_NAME` | `FREEPDB1`      |
 
---rosetta-db-hostname <str>
-    Database hostname (default: localhost)
-    Environment variable: ROSETTA_DB_HOSTNAME
+### Behavior Flags
 
---rosetta-db-port <int>
-    Database port (default: 1521)
-    Environment variable: ROSETTA_DB_PORT
+Toggle specific actions during import:
 
---rosetta-db-username <str>
-    Database username (default: system)
-    Environment variable: ROSETTA_DB_USERNAME
+- `--flag-upload-blob-storage`: Upload to Azure (Default: `true`)
+- `--flag-save-to-db`: Persist metadata to Rosetta (Default: `true`)
+- `--flag-generate-sql`: Print SQL INSERT statements to stdout (Default: `true`)
 
---rosetta-db-password <str>
-    Database password (default: Pass123Word)
-    Environment variable: ROSETTA_DB_PASSWORD
-
---rosetta-db-sid <str>
-    Database SID
-    Environment variable: ROSETTA_DB_SID
-
---rosetta-db-service-name <str>
-    Database service name (default: FREEPDB1)
-    Environment variable: ROSETTA_DB_SERVICE_NAME
-
---rosetta-db-schemaprefix <str>
-    Schema prefix for database tables (default: V2PN)
-    Environment variable: ROSETTA_DB_SCHEMAPREFIX
-```
-
-#### Behavior Flags
-
-```
---flag-upload-blob-storage true|false
-    Whether to upload blobs to Azure Storage (default: true)
-
---flag-save-to-db true|false
-    Whether to save blob metadata to the Rosetta database (default: true)
-
---flag-generate-sql true|false
-    Whether to generate and print SQL INSERT statements (default: true)
-```
-
-#### Examples
-
-##### List containers
-
-```bash
-python -m pyaz.cli lc
-```
-
-##### Create a container
-
-```bash
-python -m pyaz.cli cc --container-name my-container
-```
-
-##### Import a directory
+### Example: Importing a Directory
 
 ```bash
 python -m pyaz.cli id \
   --container-name fixity-dev \
-  --prefix-directory /path/to/data \
-  --source-directory /path/to/data
-```
-
-This command:
-
-1. Recursively uploads all files from `--source-directory` to the container
-2. Extracts storage entity type and ID from filenames (defaults to FILE type, or IE for `ie.xml`)
-3. Computes MD5 checksum for each file
-4. Saves file size and metadata to the Rosetta database (PERMANENT_INDEX table)
-5. Generates INSERT SQL statements if `--flag-generate-sql` is true
-
-##### Import a single file
-
-```bash
-python -m pyaz.cli if \
-  --container-name fixity-dev \
-  --source-file /path/to/file.bin \
-  --prefix-directory /path/to
-```
-
-##### List blobs in a container
-
-```bash
-python -m pyaz.cli lb --container-name fixity-dev
-```
-
-##### Delete a blob
-
-```bash
-python -m pyaz.cli db \
-  --container-name fixity-dev \
-  --blob-name path/to/blob.bin
-```
-
-#### Generated SQL
-
-When `--flag-generate-sql true` is set, the module prints fully-rendered SQL INSERT statements to stdout. Redirect to a file for auditing or manual execution:
-
-```bash
-python -m pyaz.cli id \
   --prefix-directory /path/to/data \
   --source-directory /path/to/data \
-  --flag-generate-sql true > /tmp/audit.sql
+  --flag-generate-sql true > audit.sql
 ```
 
-The SQL includes:
+This command uploads the files, calculates MD5 checksums, updates the `PERMANENT_INDEX` table, and logs the SQL for auditing.
 
-- Blob metadata (file size, MD5 checksum, storage entity type)
-- Storage parameters (directory root mapping)
-- All values as literals (no bind parameters)
+---
 
-## Notes
+## Operational Notes
 
-- `simulator` uses the `docker-compose-dev.yml` extracted at install time. No `.env` file is required.
-- `fixity` uses the `docker-compose-fixity.yml` extracted at install time and reads `.env` from the installation directory.
-- `fixity install` copies compose files and database scripts from the bundled package resources. Re-run it after a package upgrade to refresh the compose files and `db/`.
-- `fixity install` always initialises fixity master persistent storage. It prompts once whether to also initialise simulator storage; use `--yes` to skip all prompts (simulator will not be initialised).
-- `fixity install` will generated the key and certificate for access to the Azure Functions. The generated files will be stored in /persistent/fixity.
-- `fixity build` requires a Viridian repository checkout. Use `--project-root <path>` if running from outside the repo root (default: `.`).
-- The image version and registry are read from the installed `docker-compose-fixity.yml`; no flags are needed for `build` or `push`.
+- **Resources:** `fixity install` extracts resources from the package. Re-run this command after upgrading the `fixity-cli` package to ensure your Compose files and DB scripts are up to date.
+- **Security:** `fixity install` automatically generates the key and certificate required for Azure Functions access, stored in `/persistent/fixity`.
+- **Context:** `fixity build` defaults to the current directory (`.`) for the repository root unless `--project-root` is specified.
+- **Configuration:** The image version and registry settings are read directly from the installed `docker-compose-fixity.yml`.
 
-## Build a distribution
+---
 
-The package no longer bundles compose files or database scripts — those are
-extracted from the Docker image at install time. Building a distribution only
-requires the source tree and standard tooling.
+## Distribution & Publishing
 
-Install build tooling:
+### Build a Distribution
 
-```bash
-python3 -m pip install --upgrade build twine
-```
+To package the CLI for distribution:
 
-Build source and wheel distributions from the `cli_tools/` directory:
+1.  **Install tools:** `python3 -m pip install --upgrade build twine`
+2.  **Build:** Run `python3 -m build` from the `cli_tools/` directory.
+3.  **Output:** Artifacts will be located in `dist/`.
 
-```bash
-python3 -m build
-```
+### Publish to Azure Artifacts
 
-Artifacts are written to `dist/`.
+1.  **Set Credentials:**
+    ```bash
+    export TWINE_USERNAME=<azure-devops-username>
+    export TWINE_PASSWORD=<personal-access-token>
+    ```
+2.  **Upload:**
+    ```bash
+    python3 -m twine upload \
+      --repository-url https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/pypi/upload/ \
+      dist/*
+    ```
 
-## Publish to Azure Artifacts PyPI
-
-Use an Azure DevOps feed endpoint in the form:
-
-```text
-https://pkgs.dev.azure.com/<organization>/<project>/_packaging/<feed>/pypi/upload/
-```
-
-Create a Personal Access Token with package read/write permissions, then export credentials:
-
-```bash
-export TWINE_USERNAME=<azure-devops-username>
-export TWINE_PASSWORD=<personal-access-token>
-```
-
-Upload the package:
-
-```bash
-python3 -m twine upload \
-	--repository-url https://pkgs.dev.azure.com/<organization>/<project>/_packaging/<feed>/pypi/upload/ \
-	dist/*
-```
-
-## Install from Azure Artifacts
-
-Use the feed simple index URL:
-
-```text
-https://pkgs.dev.azure.com/<organization>/<project>/_packaging/<feed>/pypi/simple/
-```
-
-Example install:
+### Install from Azure Artifacts
 
 ```bash
 python3 -m pip install \
-	--index-url https://pkgs.dev.azure.com/<organization>/<project>/_packaging/<feed>/pypi/simple/ \
-	--extra-index-url https://pypi.org/simple \
-	fixity-cli
+  --index-url https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/pypi/simple/ \
+  --extra-index-url https://pypi.org/simple \
+  fixity-cli
 ```
