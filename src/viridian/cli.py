@@ -68,7 +68,14 @@ def generate_fixity_certificate_assets(install_path: Path) -> None:
 def main() -> int:
     try:
         app_name = Path(sys.argv[0]).name
-        if app_name not in ["fixity", "dashboard", "proxy", "azurite", "oracle"]:
+        if app_name not in [
+            "fixity",
+            "dashboard",
+            "proxy",
+            "azurite",
+            "oracle",
+            "postgres",
+        ]:
             raise RuntimeError(f"Unknown app: {app_name}")
 
         args = parse_args_app()
