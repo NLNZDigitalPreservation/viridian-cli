@@ -3,7 +3,7 @@ networks:
     external: true
 services:
   postgres:
-    image: docker.io/library/postgres:16.9-alpine
+    image: acrdiaanlnzndev.azurecr.io/fixity-postgres:${POSTGRES_VERSION:-latest}
     container_name: "postgres"
     restart: always
     security_opt:
