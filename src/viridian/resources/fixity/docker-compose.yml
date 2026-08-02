@@ -76,4 +76,5 @@ services:
       - MANAGED_IDENTITY_TOKEN_URL=${MANAGED_IDENTITY_TOKEN_URL:-http://169.254.169.254/metadata/identity/oauth2/token}
       - FIXITY_WORKER_FUNC_HOSTS_KEY=${FIXITY_WORKER_FUNC_HOSTS_KEY:-}
     volumes:
-      - ${SOURCE_PERSISTENT_PATH:-/persistent/fixity}:/persistent/fixity
+      - ${SOURCE_INSTALL_PATH:-/data/viridian/conf/fixity}:/conf/fixity
+      - ${SOURCE_PERSISTENT_PATH:-/data/viridian/persistent/fixity}:/persistent/fixity
