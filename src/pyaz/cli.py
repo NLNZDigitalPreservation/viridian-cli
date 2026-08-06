@@ -1,10 +1,16 @@
 #!/usr/bin/env -S .venv/bin/python3
 from datetime import datetime
+import hashlib
 import time
 import os
 from pathlib import Path
 
-from azure.storage.blob import BlobClient, BlobServiceClient, ContainerClient
+from azure.storage.blob import (
+    BlobClient,
+    BlobServiceClient,
+    ContainerClient,
+    ContentSettings,
+)
 from pyaz.blob_upload import upload_blob
 from pyaz.configure import parse_args
 from pyaz.db_access_rosetta import rosetta_db
@@ -93,6 +99,41 @@ def import_directory(args):
     return "\n".join(uploaded_stored_entity_id)
 
 
+def import_mocked_file_based_on_db(args):
+    """
+    This function is used to import a mocked file based on the database entries.
+    It will query the database for the latest entry and use that information to create a mocked file.
+    """
+
+    svc = _get_service_client(args.connection_string)
+    container = svc.get_container_client(args.container_name)
+
+    # Query the database for the latest entry
+    sql_query = f"SELECT FILE_SIZE, CHECK_SUM, INDEX_LOCATION FROM {rosetta_db.schemaprefix}_PER00.PERMANENT_INDEX ORDER BY ID DESC FETCH FIRST 10 ROWS ONLY"
+    rows = rosetta_db.query_all_rows(sql_query)
+    results = []
+    for row in rows:
+        print(row)
+
+        file_size, _, blob_name = row
+
+        content_type = "application/octet-stream"
+
+        binary_data = os.urandom(file_size)
+        md5_hash = hashlib.md5(binary_data).digest()
+
+        cs = ContentSettings(content_type=content_type, content_md5=md5_hash)
+        container.upload_blob(
+            name=blob_name,
+            data=binary_data,
+            overwrite=True,
+            content_settings=cs,
+        )
+        results.append(f"Uploaded mocked file of size {file_size} to blob: {blob_name}")
+
+    return "\n".join(results)
+
+
 def import_file(args):
     svc = _get_service_client(args.connection_string)
     container = svc.get_container_client(args.container_name)
@@ -152,6 +193,7 @@ def main():
         "id": import_directory,
         "if": import_file,
         "db": delete_blob,
+        "ied": import_mocked_file_based_on_db,
     }
 
     rosetta_db.initialize(args)

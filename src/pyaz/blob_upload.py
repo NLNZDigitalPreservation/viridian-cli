@@ -71,14 +71,15 @@ def save_to_db(
 
     # Remove the existing row
     sql = f"DELETE FROM {rosetta_db.schemaprefix}_PER00.PERMANENT_INDEX WHERE VERSION =(:version) AND STORAGE_ENTITY_TYPE = (:storage_entity_type) AND STORED_ENTITY_ID = (:stored_entity_id)"
-    rosetta_db.execute_sql(
-        sql,
-        {
-            "version": version,
-            "storage_entity_type": storage_entity_type,
-            "stored_entity_id": stored_entity_id,
-        },
-    )
+    if args.flag_save_to_db:
+        rosetta_db.execute_sql(
+            sql,
+            {
+                "version": version,
+                "storage_entity_type": storage_entity_type,
+                "stored_entity_id": stored_entity_id,
+            },
+        )
 
     pi = PermanentIndexData(
         storage_id=storage_id,

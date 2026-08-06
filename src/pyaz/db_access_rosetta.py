@@ -158,6 +158,17 @@ class RosettaDatabaseHandler:
                 logging.error(f"Failed to execute sql: {ex}")
                 raise RuntimeError(str(ex))
 
+    def query_all_rows(self, sql_query):
+        with self.pool.acquire() as conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(sql_query)
+                    rows = cursor.fetchall()
+                    return rows
+            except Exception as ex:
+                logging.error(f"Failed to execute sql: {ex}")
+                raise RuntimeError(str(ex))
+
     def build_insert_permanent_index(
         self,
         pi: PermanentIndexData,
