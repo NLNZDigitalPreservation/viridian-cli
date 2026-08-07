@@ -109,7 +109,7 @@ def import_mocked_file_based_on_db(args):
     container = svc.get_container_client(args.container_name)
 
     # Query the database for the latest entry
-    sql_query = f"SELECT FILE_SIZE, CHECK_SUM, INDEX_LOCATION FROM {rosetta_db.schemaprefix}_PER00.PERMANENT_INDEX ORDER BY ID DESC FETCH FIRST 10 ROWS ONLY"
+    sql_query = f"SELECT FILE_SIZE, CHECK_SUM, INDEX_LOCATION FROM {rosetta_db.schemaprefix}_PER00.PERMANENT_INDEX WHERE STORAGE_ENTITY_TYPE in ('FILE', 'IE') ORDER BY ID DESC FETCH FIRST 10 ROWS ONLY"
     rows = rosetta_db.query_all_rows(sql_query)
     results = []
     for row in rows:
