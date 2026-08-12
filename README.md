@@ -1,40 +1,113 @@
-# fixity-cli
+# Viridian CLI
 
-`fixity-cli` is a Python-based command-line interface for Viridian local operations. It streamlines the management of the Viridian stack, simulator environments, and Azure Blob Storage integrations.
+`viridian-cli` is a Python command-line toolkit for managing the local Viridian service stack. Each service is exposed as its own CLI entry point, with shared lifecycle commands for installation, container control, and status checking.
 
-**Requirements:** Python 3.9 or newer.
+Requirements: Python 3.9 or newer.
 
 ---
 
-## Overview
+## Command overview
 
-The package installs two primary console entry points:
+The project installs these console entry points:
 
-### 1. `simulator`
+- `fixity`
+- `dashboard`
+- `proxy`
+- `azurite`
+- `oracle`
+- `postgres`
 
-Manages the Azurite (Storage) and Oracle (Database) simulator stack.
+Each entry point uses the same application logic and chooses its behaviour from the executable name.
 
-- **Commands:** `up`, `down`, `logs`
+### Common commands
 
-### 2. `fixity`
+All service entry points support the following commands:
 
-Manages the Fixity master node and installation lifecycle.
+```bash
+<app> install
+<app> info
+<app> up
+<app> down
+<app> restart
+<app> status
+<app> logs
+<app> exec
+```
 
-- **Commands:** `install`, `info`, `up`, `down`, `logs`, `exec`, `build`, `push`
+Examples:
 
-### Packaged Assets
+```bash
+dashboard install
+dashboard up
+dashboard logs
+dashboard down
 
-The CLI bundles the following runtime assets:
+proxy install
+proxy status
 
-- `docker-compose-dev.yml`
-- `docker-compose-fixity.yml`
-- Database scripts: `db/oracle/*` and `db/postgres/*`
+oracle install
+oracle up
+oracle logs
+```
+
+The `install` command copies the packaged compose files and environment templates into a service-specific directory, and the `info` command prints the stored installation paths for that app.
+
+---
+
+## Default installation paths
+
+The CLI uses these defaults:
+
+- install root: `/data/viridian/conf`
+- persistent data root: `/data/viridian/persistent`
+
+Each app is installed under its own subdirectory:
+
+```bash
+/data/viridian/conf/fixity
+/data/viridian/conf/dashboard
+/data/viridian/conf/proxy
+/data/viridian/conf/azurite
+/data/viridian/conf/oracle
+/data/viridian/conf/postgres
+```
+
+Likewise, persistent storage is stored under:
+
+```bash
+/data/viridian/persistent/fixity
+/data/viridian/persistent/dashboard
+/data/viridian/persistent/proxy
+/data/viridian/persistent/azurite
+/data/viridian/persistent/oracle
+/data/viridian/persistent/postgres
+```
+
+These paths are resolved in the code by app name, so the default directory is app-scoped rather than a single shared service path.
 
 ---
 
 ## Installation
 
-### Ubuntu 24.04+ (Development)
+On Ubuntu 24.04+, if the venv environment is required, then install from GitHub with `pipx`:
+
+```bash
+pipx install git+https://github.com/NLNZDigitalPreservation/viridian-cli.git
+```
+
+RHEL, if the venv envrionment is not mandatory, then install from Github with "pip":
+
+```bash
+pip3.12 install https://github.com/NLNZDigitalPreservation/viridian-cli/archive/refs/heads/main.zip --force-reinstall
+```
+
+Or install from a local checkout:
+
+```bash
+python -m pip install .
+```
+
+### Install the commands globally on Ubuntu 24.04+ (Development)
 
 The following steps install Git and `pipx`, then perform a clean global installation of the CLI:
 
@@ -59,184 +132,109 @@ sudo -i hash -r
 sudo pipx install --global --force git+https://github.com/NLNZDigitalPreservation/viridian-cli.git
 ```
 
-### RHEL
-
-For RHEL environments using Python 3.12:
-
-```bash
-sudo pip3.12 install https://github.com/NLNZDigitalPreservation/viridian-cli/archive/refs/heads/main.zip --force-reinstall
-```
-
 ---
 
-## Setup & Configuration
+## Service-specific usage
 
-### Initial Installation
-
-To install the Fixity master stack to the default directory (`/usr/local/fixity`):
+### `fixity`
 
 ```bash
 fixity install
-```
-
-**The installation process performs the following:**
-
-1.  **Path Selection:** Prompts for an installation directory.
-2.  **Asset Deployment:** Copies bundled Compose files and DB scripts.
-3.  **Environment Setup:** Creates a `.env` file from a template (if not already present).
-4.  **Storage Initialization:** Creates persistent storage directories for Fixity.
-5.  **Simulator Setup:** Optionally initializes simulator storage directories.
-
-**Non-Interactive Install:**
-Use the `--yes` flag to accept all defaults (Note: the simulator is **not** enabled in this mode).
-
-```bash
-fixity install --yes
-```
-
-> [!IMPORTANT]
-> Edit the `.env` file in your installation directory before starting services for the first time.
-
-### View Installation Status
-
-To see the resolved installation path and the state of managed directories:
-
-```bash
 fixity info
+fixity up
+fixity logs
+fixity down
+fixity exec
+```
+
+### `dashboard`
+
+```bash
+dashboard install
+dashboard up
+dashboard logs
+dashboard down
+```
+
+### `proxy`
+
+```bash
+proxy install
+proxy up
+proxy logs
+proxy down
+```
+
+### `azurite`
+
+```bash
+azurite install
+azurite up
+azurite logs
+azurite down
+```
+
+### `oracle`
+
+```bash
+oracle install
+oracle up
+oracle logs
+oracle down
+```
+
+### `postgres`
+
+```bash
+postgres install
+postgres up
+postgres logs
+postgres down
 ```
 
 ---
 
-## Usage Guide
+## Container engine selection
 
-### Managing Simulators
-
-Start/stop the Azurite and Oracle stack:
+The CLI accepts a container engine choice:
 
 ```bash
-simulator up       # Start stack
-simulator logs     # Follow logs
-simulator down     # Stop stack
+--container-engine auto
+--container-engine podman
+--container-engine docker
 ```
 
-### Managing the Fixity Master Node
-
-Commands for the primary Fixity service:
-
-```bash
-fixity up          # Start master stack
-fixity logs        # Follow logs
-fixity exec        # Open a shell inside the running master container
-fixity down        # Stop master stack
-```
-
-### Development Commands
-
-- **Build:** Create the master image from a Viridian repository checkout.
-  ```bash
-  fixity build --project-root /path/to/repo
-  ```
-- **Push:** Push the tagged image to the Azure Container Registry defined in the compose file.
-  ```bash
-  fixity push
-  ```
+If set to `auto`, it prefers `podman` if available and otherwise falls back to `docker`.
 
 ---
 
-## Azure Blob Storage Management (`pyaz`)
+## Configuration and environment files
 
-The `pyaz` module handles Azure Blob Storage operations and Rosetta database metadata persistence.
+Each install creates:
 
-### Command Syntax
+- a service-specific install directory under `/data/viridian/conf/<app>`
+- a corresponding persistent storage root under `/data/viridian/persistent/<app>`
+- a `.env` file generated from the bundled template, if present
+- a saved config entry in the user config directory under `~/.config/viridian/config.json`
+
+This allows the CLI to remember the install path and data path for each application without requiring the user to pass it repeatedly.
+
+---
+
+## `pyaz`
+
+`pyaz` is the Azure Blob Storage helper and remains a separate CLI entry point.
 
 ```bash
 python -m pyaz.cli <command> [options]
 ```
 
-### Available Commands
-
-| Command | Description                                                  |
-| :------ | :----------------------------------------------------------- |
-| `cc`    | **Create** a container                                       |
-| `dc`    | **Delete** a container                                       |
-| `lc`    | **List** all containers                                      |
-| `lb`    | **List** blobs within a container                            |
-| `id`    | **Import Directory**: Recursively upload files and update DB |
-| `if`    | **Import File**: Upload a single file and update DB          |
-| `db`    | **Delete** a specific blob                                   |
-
-### Configuration Options
-
-These can be passed as flags or set as environment variables:
-
-| Option                      | Env Variable              | Default         |
-| :-------------------------- | :------------------------ | :-------------- |
-| `--connection-string`       | `CONNECTION_STRING`       | (Azurite Local) |
-| `--container-name`          | `CONTAINER_NAME`          | `fixity-dev`    |
-| `--rosetta-db-hostname`     | `ROSETTA_DB_HOSTNAME`     | `localhost`     |
-| `--rosetta-db-username`     | `ROSETTA_DB_USERNAME`     | `system`        |
-| `--rosetta-db-service-name` | `ROSETTA_DB_SERVICE_NAME` | `FREEPDB1`      |
-
-### Behavior Flags
-
-Toggle specific actions during import:
-
-- `--flag-upload-blob-storage`: Upload to Azure (Default: `true`)
-- `--flag-save-to-db`: Persist metadata to Rosetta (Default: `true`)
-- `--flag-generate-sql`: Print SQL INSERT statements to stdout (Default: `true`)
-
-### Example: Importing a Directory
-
-```bash
-python -m pyaz.cli id \
-  --container-name fixity-dev \
-  --prefix-directory /path/to/data \
-  --source-directory /path/to/data \
-  --flag-generate-sql true > audit.sql
-```
-
-This command uploads the files, calculates MD5 checksums, updates the `PERMANENT_INDEX` table, and logs the SQL for auditing.
+Typical usage includes container creation, listing, uploading, and metadata import workflows for Azurite-compatible storage.
 
 ---
 
-## Operational Notes
+## Notes
 
-- **Resources:** `fixity install` extracts resources from the package. Re-run this command after upgrading the `fixity-cli` package to ensure your Compose files and DB scripts are up to date.
-- **Security:** `fixity install` automatically generates the key and certificate required for Azure Functions access, stored in `/persistent/fixity`.
-- **Context:** `fixity build` defaults to the current directory (`.`) for the repository root unless `--project-root` is specified.
-- **Configuration:** The image version and registry settings are read directly from the installed `docker-compose-fixity.yml`.
-
----
-
-## Distribution & Publishing
-
-### Build a Distribution
-
-To package the CLI for distribution:
-
-1.  **Install tools:** `python3 -m pip install --upgrade build twine`
-2.  **Build:** Run `python3 -m build` from the `cli_tools/` directory.
-3.  **Output:** Artifacts will be located in `dist/`.
-
-### Publish to Azure Artifacts
-
-1.  **Set Credentials:**
-    ```bash
-    export TWINE_USERNAME=<azure-devops-username>
-    export TWINE_PASSWORD=<personal-access-token>
-    ```
-2.  **Upload:**
-    ```bash
-    python3 -m twine upload \
-      --repository-url https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/pypi/upload/ \
-      dist/*
-    ```
-
-### Install from Azure Artifacts
-
-```bash
-python3 -m pip install \
-  --index-url https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/pypi/simple/ \
-  --extra-index-url https://pypi.org/simple \
-  fixity-cli
-```
+- The legacy `simulator` command is no longer part of the package.
+- The stack is now grouped by app-specific entry points: `dashboard`, `proxy`, `azurite`, `oracle`, and `postgres`.
+- The default install locations are no longer a single shared path for all services; they are app-scoped under `/data/viridian/conf` and `/data/viridian/persistent`.
