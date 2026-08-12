@@ -2,7 +2,7 @@
 
 `viridian-cli` is a Python command-line toolkit for managing the local Viridian service stack. Each service is exposed as its own CLI entry point, with shared lifecycle commands for installation, container control, and status checking.
 
-Requirements: Python 3.9 or newer.
+Requirements: Python 3.12 or newer.
 
 ---
 
