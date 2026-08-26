@@ -1,6 +1,6 @@
 drop table if exists global_settings cascade;
-drop table if exists white_list cascade;
-drop table if exists fixity_task cascade;
+drop table if exists user_list cascade;
+drop table if exists notify_subscription cascade;
 drop table if exists fixity_report cascade;
 drop table if exists blob_event_queue cascade;
 drop table if exists blob_event_results cascade;

@@ -13,33 +13,29 @@ values (1);
 --
 --
 -- 
--- white_list
-create table white_list (
+-- user_list
+create table user_list (
     id BIGSERIAL primary key,
-    account_name VARCHAR(255) not null,
-    mail VARCHAR(255) not null,
+    user_name VARCHAR(255) not null,
+    email VARCHAR(255) not null,
     presentation_name VARCHAR(255) not null,
     role VARCHAR(16) not null default 'admin'
 );
-create unique index idx_wl_account_name on white_list (account_name);
-create index idx_wl_mail on white_list (mail);
+create unique index idx_ul_user_name on user_list (user_name);
+create index idx_ul_email on user_list (email);
 
 --
 --
---
---Table: fixity_task
-create table fixity_task (
+-- 
+-- Table: notify_subscription
+create table notify_subscription (
     id BIGSERIAL primary key,
-    fixity_type INT not null default 0,
-    fixity_filter JSONB default null,
-    annotation VARCHAR(255) default null,
-    creator BIGINT not null,
-    creation_time DOUBLE PRECISION not null default 0,
-    actual_start_time DOUBLE PRECISION not null default 0,
-    actual_end_time DOUBLE PRECISION not null default 0,
-    state INT not null default 0
+    email VARCHAR(255) not null,
+    preload_task BOOLEAN not null default true,
+    blob_event_task BOOLEAN not null default true,
+    bau_task BOOLEAN not null default true
 );
-create index task_state on fixity_task (state);
+create index idx_ns_email on notify_subscription (email);
 
 --
 --
