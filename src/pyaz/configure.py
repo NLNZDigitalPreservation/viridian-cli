@@ -19,7 +19,18 @@ def str2bool(value):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="pyaz", description="pyaz: manage the blob storage in the Azurite"
+        prog="pyaz",
+        description="""pyaz: manage the blob storage in the Azurite:
+          cc  - create container 
+          dc  - delete container
+          lc  - list containers
+          lb  - list blobs
+          id  - import directory
+          if  - import file
+          db  - delete blob
+          ied - import mocked file based on db
+          """,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
