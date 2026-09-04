@@ -127,6 +127,7 @@ create index permanentindex_storageentity on permanent_index (storage_entity_typ
 create index permanentindex_s_e_id on permanent_index (stored_entity_id);
 create index permanentindex_version on permanent_index (version);
 create index permanentindex_index_location on permanent_index (index_location);
+create unique index permanentindex_stored_entity_id_version_storage_entity_type on permanent_index (stored_entity_id, version, storage_entity_type);
 create index permanentindex_pir_file_check_state on permanent_index (pir_file_check_state);
 create index permanentindex_pir_mets_check_state on permanent_index (pir_mets_check_state);
 
