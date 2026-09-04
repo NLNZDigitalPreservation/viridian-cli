@@ -67,12 +67,12 @@ create table blob_event_queue (
     file_check_state INT default 10,
     file_check_desc VARCHAR(4000),
     file_check_sum VARCHAR(255),
-    blob_name VARCHAR(255),
     blob_size BIGINT,
     file_check_state_confirmed BOOLEAN default false
 );
 create unique index blobeventqueue_event_id on blob_event_queue (event_id);
 create index blobeventqueue_file_check_state on blob_event_queue (file_check_state);
+create index blobeventqueue_blob_url on blob_event_queue (blob_url);
 
 --
 --
@@ -84,11 +84,11 @@ create table blob_event_results (
     file_check_state INT default 10,
     file_check_desc VARCHAR(4000),
     file_check_sum VARCHAR(255),
-    blob_name VARCHAR(255),
+    blob_url VARCHAR(1024),
     blob_size BIGINT
 );
 create index blobeventresults_file_check_state on blob_event_results (file_check_state);
-create index blobeventresults_blob_name on blob_event_results (blob_name);
+create index blobeventresults_blob_url on blob_event_results (blob_url);
 
 
 --
