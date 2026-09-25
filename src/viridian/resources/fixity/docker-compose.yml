@@ -9,11 +9,12 @@ services:
     security_opt:
       - label=disable
     ports:
-      - "3000:3000"
+      - "8082:3000"
     networks:
       - viridian-network
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FILE=${LOG_FILE:-/data/viridian/persistent/fixity/logs/fixity-master.log}
       - ROSETTA_PDS_URL=${ROSETTA_PDS_URL:-https://slbpdstest.natlib.govt.nz/pds}
       - CONNECTION_STRING=${CONNECTION_STRING:-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;}
       - AZURE_WEB_JOBS_STORAGE=${AZURE_WEB_JOBS_STORAGE:-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;}
@@ -29,13 +30,11 @@ services:
       - FIXITY_WORKER_FUNC_KEY_SINGLE_FILE=${FIXITY_WORKER_FUNC_KEY_SINGLE_FILE:-}
       - FIXITY_WORKER_FUNC_KEY_SINGLE_METS=${FIXITY_WORKER_FUNC_KEY_SINGLE_METS:-}
       - FIXITY_SSL_VERIFY=${FIXITY_SSL_VERIFY:-true}
-      - FIXITY_CA_BUNDLE=${FIXITY_CA_BUNDLE:-/persistent/fixity}
-      - ROSETTA_DB_HOSTNAME=${ROSETTA_DB_HOSTNAME:-localhost}
-      - ROSETTA_DB_PORT=${ROSETTA_DB_PORT:-1521}
+      - FIXITY_CA_BUNDLE=${FIXITY_CA_BUNDLE:-/data/viridian/conf/fixity/ssl}
+      - ROSETTA_ORACLE_LIB=${ROSETTA_ORACLE_LIB:-/opt/oracle/instantclient_23_26}
+      - ROSETTA_TNS_DIR=${ROSETTA_TNS_DIR:-/data/viridian/conf/fixity/oracle/tns}
       - ROSETTA_DB_USERNAME=${ROSETTA_DB_USERNAME:-fixity}
       - ROSETTA_DB_PASSWORD=${ROSETTA_DB_PASSWORD:-fixity}
-      - ROSETTA_DB_SID=${ROSETTA_DB_SID}
-      - ROSETTA_DB_SERVICE_NAME=${ROSETTA_DB_SERVICE_NAME}
       - ROSETTA_DB_SCHEMAPREFIX=${ROSETTA_DB_SCHEMAPREFIX}
       - DBMS_HOSTNAME=${DBMS_HOSTNAME:-localhost}
       - DBMS_PORT=${DBMS_PORT:-5432}
@@ -60,9 +59,8 @@ services:
       - ACCOUNT_NAME=${ACCOUNT_NAME:-devstoreaccount1}
       - ACCOUNT_KEY=${ACCOUNT_KEY:-Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==}
       - AUTH_MODE=${AUTH_MODE:-azurite}
-      - VERSION=${VERSION:-2.0.0}
-      - TEST_MODE=${TEST_MODE:-false}
-      - EXPIRE_INTERVAL=${EXPIRE_INTERVAL:-1800}
+      - VERSION=${VERSION:-3.0.0}
+      - EXPIRE_INTERVAL=${EXPIRE_INTERVAL:-86400000}
       - BOOTSTRAP_PASSWORD=${BOOTSTRAP_PASSWORD:-password}
       - API_PORT=${API_PORT:-3000}
       - BATCH_SIZE=${BATCH_SIZE:-200}
@@ -70,7 +68,7 @@ services:
       - CONTENT_READ_BUFFER_SIZE=${CONTENT_READ_BUFFER_SIZE:-10485760}
       - MAX_RUNNING_MILLIONS=${MAX_RUNNING_MILLIONS:-180000}
       - MAX_WORKER_TIMEOUT_HOURS=${MAX_WORKER_TIMEOUT_HOURS:-24}
-      - PERSISTENT_STORAGE=${PERSISTENT_STORAGE:-/persistent/fixity}
+      - PERSISTENT_STORAGE=${PERSISTENT_STORAGE:-/data/viridian/persistent/fixity}
       - BLOB_URL_PREFIX=${BLOB_URL_PREFIX:-http://localhost:10000/devstoreaccount1/fixity-dev}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-frank.lee@dia.govt.nz}
       - MANAGED_IDENTITY_CLIENT_ID=${MANAGED_IDENTITY_CLIENT_ID:-}
@@ -79,6 +77,7 @@ services:
       - USER_AUTH_MODE=${USER_AUTH_MODE:-entra}
       - USER_AUTH_ENTRA_CLIENT_ID=${USER_AUTH_ENTRA_CLIENT_ID:-}
       - USER_AUTH_ENTRA_TENANT_ID=${USER_AUTH_ENTRA_TENANT_ID:-}
+      - TNS_ADMIN=${ROSETTA_TNS_DIR:-/data/viridian/conf/fixity/oracle/tns}
     volumes:
-      - ${SOURCE_INSTALL_PATH:-/data/viridian/conf/fixity}:/conf/fixity
-      - ${SOURCE_PERSISTENT_PATH:-/data/viridian/persistent/fixity}:/persistent/fixity
+      - ${SOURCE_INSTALL_PATH:-/data/viridian/conf/fixity}:/data/viridian/conf/fixity
+      - ${SOURCE_PERSISTENT_PATH:-/data/viridian/persistent/fixity}:/data/viridian/persistent/fixity
