@@ -14,5 +14,7 @@ services:
       - "8443:8443"
     networks:
       - viridian-network
+    environment:
+      - ENV_NAME=${ENV_NAME:-dev}
     volumes:
       - /data/certs:/data/certs
