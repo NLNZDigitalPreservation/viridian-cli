@@ -4,7 +4,7 @@ networks:
 services:
   proxy:
     image: acrdiaanlnzndev.azurecr.io/http-proxy:${PROXY_VERSION:-latest}
-    command: nginx -g "daemon off;"
+    command: /etc/nginx/run.sh
     container_name: proxy
     hostname: proxy
     restart: always
