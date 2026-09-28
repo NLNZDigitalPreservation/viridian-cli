@@ -8,7 +8,11 @@ services:
     container_name: proxy
     hostname: proxy
     restart: always
+    security_opt:
+      - label=disable
     ports:
-      - "8081:443"
+      - "8443:8443"
     networks:
       - viridian-network
+    volumes:
+      - /data/certs:/data/certs
