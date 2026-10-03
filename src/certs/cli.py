@@ -7,7 +7,7 @@ import os
 from certs.sort_fullchain import sort_certificates_in_chain
 
 SOURCE_ROOT_DIR = "/data/certs"
-DEST_ROOT_DIR = "/data/viridian/conf/proxy/ssl"
+DEST_ROOT_DIR = "/data/viridian/conf/proxy"
 
 
 def str2bool(value):

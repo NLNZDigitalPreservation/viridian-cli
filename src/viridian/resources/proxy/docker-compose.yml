@@ -17,4 +17,4 @@ services:
     environment:
       - ENV_NAME=${ENV_NAME:-dev}
     volumes:
-      - /data/certs:/data/certs
+      - ${SOURCE_INSTALL_PATH:-/data/viridian/conf/proxy}:/data/certs
