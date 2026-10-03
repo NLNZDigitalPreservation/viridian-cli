@@ -1,7 +1,10 @@
 import argparse
+from pathlib import Path
 import shutil
 import subprocess
 import os
+
+from certs.sort_fullchain import sort_certificates_in_chain
 
 SOURCE_ROOT_DIR = "/data/certs"
 DEST_ROOT_DIR = "/data/viridian/conf/proxy/ssl"
@@ -44,6 +47,19 @@ def parse_args():
         type=str2bool,
         default=True,
         help="Flag to indicate whether to replace existing certificates (true/false). Default is true.",
+    )
+
+    parser.add_argument(
+        "--source-dir",
+        type=str,
+        default=SOURCE_ROOT_DIR,
+        help="Source directory for certificates. Default is /data/certs.",
+    )
+    parser.add_argument(
+        "--dest-dir",
+        type=str,
+        default=DEST_ROOT_DIR,
+        help="Destination directory for certificates. Default is /data/viridian/conf/proxy/ssl.",
     )
 
     args = parser.parse_args()
@@ -180,16 +196,32 @@ def verify_certificates(cert_file: str, privkey_file: str):
     raise ValueError("Certificate and private key do not match.")
 
 
-def resolve_certificates(env_name: str, replace: bool = False):
-    src_cert_file = f"{SOURCE_ROOT_DIR}/cert-wildcard-{env_name}-natlib-govt-nz/cert-wildcard-{env_name}-natlib-govt-nz_fullchain.pem"
-    dest_cert_file = f"{DEST_ROOT_DIR}/cert-wildcard.pem"
-    copy_files(src_cert_file, dest_cert_file, replace)
+def resolve_certificates(args):
+    env_name = args.command
 
-    src_privkey_file = f"{SOURCE_ROOT_DIR}/cert-wildcard-{env_name}-natlib-govt-nz/cert-wildcard-{env_name}-natlib-govt-nz_privkey.pem"
-    dest_privkey_file = f"{DEST_ROOT_DIR}/cert-wildcard-privkey.pem"
-    copy_files(src_privkey_file, dest_privkey_file, replace)
+    cert_file_name = f"cert-wildcard-{env_name}-natlib-govt-nz_fullchain.pem"
+    src_cert_file = (
+        f"{args.source_dir}/cert-wildcard-{env_name}-natlib-govt-nz/{cert_file_name}"
+    )
+    dest_cert_file = (
+        f"{args.dest_dir}/cert-wildcard-{env_name}-natlib-govt-nz/{cert_file_name}"
+    )
 
-    verify_certificates(dest_cert_file, dest_privkey_file)
+    privkey_file_name = f"cert-wildcard-{env_name}-natlib-govt-nz_privkey.pem"
+    src_privkey_file = (
+        f"{args.source_dir}/cert-wildcard-{env_name}-natlib-govt-nz/{privkey_file_name}"
+    )
+    dest_privkey_file = (
+        f"{args.dest_dir}/cert-wildcard-{env_name}-natlib-govt-nz/{privkey_file_name}"
+    )
+
+    sort_certificates_in_chain(
+        certs_path=Path(src_cert_file),
+        key_path=Path(src_privkey_file),
+        cert_out=Path(dest_cert_file),
+        key_out=Path(dest_privkey_file),
+    )
+    # verify_certificates(dest_cert_file, dest_privkey_file)
 
 
 def main():
@@ -201,7 +233,7 @@ def main():
             raise ValueError("ENV_NAME environment variable is not set.")
 
         replace_existing = os.environ.get("REPLACE_EXISTING", "false").lower() == "true"
-        resolve_certificates(env_name, args.flag_replace_existing)
+        resolve_certificates(args)
         print(f"Certificates copied successfully for environment: {env_name}")
         exit(0)
     except FileNotFoundError as e:
@@ -216,5 +248,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
